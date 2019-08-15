@@ -188,7 +188,7 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
       $available_countries[] = $country_item->value;
     }
     $inline_form = $this->inlineFormManager->createInstance('customer_profile', [
-      'instance_id' => 'shipping',
+      'profile_scope' => 'shipping',
       'available_countries' => $available_countries,
       'address_book_uid' => $this->order->getCustomerId(),
       // Don't copy the profile to address book until the order is placed.
