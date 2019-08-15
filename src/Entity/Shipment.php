@@ -594,6 +594,25 @@ class Shipment extends ContentEntityBase implements ShipmentInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public static function bundleFieldDefinitions(EntityTypeInterface $entity_type, $bundle, array $base_field_definitions) {
+    $shipment_type = ShipmentType::load($bundle);
+    if (!$shipment_type) {
+      throw new \RuntimeException(sprintf('Could not load the "%s" shipment type.', $bundle));
+    }
+    $fields = [];
+    $fields['shipping_profile'] = clone $base_field_definitions['shipping_profile'];
+    $fields['shipping_profile']->setSetting('handler_settings', [
+      'target_bundles' => [
+        $shipment_type->getProfileTypeId(),
+      ],
+    ]);
+
+    return $fields;
+  }
+
+  /**
    * Gets the workflow ID for the state field.
    *
    * @param \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment

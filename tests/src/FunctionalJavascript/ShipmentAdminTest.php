@@ -8,9 +8,13 @@ use Drupal\commerce_price\Price;
 use Drupal\commerce_product\Entity\ProductVariationType;
 use Drupal\commerce_shipping\Entity\PackageType;
 use Drupal\commerce_shipping\Entity\Shipment;
+use Drupal\commerce_shipping\Entity\ShipmentType;
 use Drupal\commerce_shipping\ShipmentItem;
 use Drupal\Core\Url;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\physical\Weight;
+use Drupal\profile\Entity\ProfileType;
 use Drupal\Tests\commerce\FunctionalJavascript\CommerceWebDriverTestBase;
 use Drupal\views\Entity\View;
 
@@ -40,6 +44,7 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
    */
   public static $modules = [
     'commerce_shipping_test',
+    'telephone',
   ];
 
   /**
@@ -47,6 +52,7 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
    */
   protected function setUp() {
     parent::setUp();
+
     $product_variation_type = ProductVariationType::load('default');
     $product_variation_type->setTraits(['purchasable_entity_shippable']);
     $product_variation_type->setGenerateTitle(FALSE);
@@ -143,6 +149,32 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
         ],
       ],
     ]);
+
+    // Create a different shipping profile type, which also has a Phone field.
+    $bundle_entity_duplicator = $this->container->get('entity.bundle_entity_duplicator');
+    $customer_profile_type = ProfileType::load('customer');
+    $shipping_profile_type = $bundle_entity_duplicator->duplicate($customer_profile_type, [
+      'id' => 'customer_shipping',
+      'label' => 'Customer (Shipping)',
+    ]);
+    // Add a telephone field to the new profile type.
+    $field_storage = FieldStorageConfig::create([
+      'field_name' => 'field_phone',
+      'entity_type' => 'profile',
+      'type' => 'telephone',
+    ]);
+    $field_storage->save();
+    $field = FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $shipping_profile_type->id(),
+      'label' => 'Phone',
+    ]);
+    $field->save();
+    $form_display = commerce_get_entity_display('profile', 'customer_shipping', 'form');
+    $form_display->setComponent('field_phone', [
+      'type' => 'telephone_default',
+    ]);
+    $form_display->save();
   }
 
   /**
@@ -225,6 +257,11 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
    * Tests creating a shipment for an order.
    */
   public function testShipmentCreate() {
+    // Use a custom profile type.
+    $shipment_type = ShipmentType::load('default');
+    $shipment_type->setProfileTypeId('customer_shipping');
+    $shipment_type->save();
+
     $this->drupalGet($this->shipmentUri);
     $page = $this->getSession()->getPage();
     $page->clickLink('Add shipment');
@@ -250,6 +287,7 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     foreach ($address as $property => $value) {
       $page->fillField($address_prefix . '[' . $property . ']', $value);
     }
+    $page->fillField('shipping_profile[0][profile][field_phone][0][value]', '202-555-0108');
     $this->assertSession()->pageTextContains('Shipping method');
     $first_radio_button = $page->findField('Standard shipping: $9.99');
     $second_radio_button = $page->findField('Overnight shipping: $19.99');
@@ -269,6 +307,10 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     $this->assertEquals($this->order->id(), $shipment->getOrderId());
     $this->assertEquals('9.99', $shipment->getAmount()->getNumber());
     $this->assertSession()->pageTextContains($shipment->label());
+    $shipping_profile = $shipment->getShippingProfile();
+    $this->assertEquals('customer_shipping', $shipping_profile->bundle());
+    $this->assertEquals('1098 Alta Ave', $shipping_profile->get('address')->address_line1);
+    $this->assertEquals('202-555-0108', $shipping_profile->get('field_phone')->value);
     $this->assertSession()->pageTextContains('$9.99');
     $this->assertTrue($page->hasButton('Finalize shipment'));
     $this->assertTrue($page->hasButton('Cancel shipment'));
@@ -282,7 +324,7 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
    * Tests editing a shipment.
    */
   public function testShipmentEdit() {
-    $method = $this->createEntity('commerce_shipping_method', [
+    $shipping_method = $this->createEntity('commerce_shipping_method', [
       'name' => 'The best shipping',
       'stores' => [$this->store->id()],
       'plugin' => [
@@ -318,7 +360,7 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     $shipping_services = $shipping_method_plugin->getServices();
     $shipment
       ->setData('owned_by_packer', TRUE)
-      ->setShippingMethod($method)
+      ->setShippingMethod($shipping_method)
       ->setShippingService(key($shipping_services))
       ->save();
     $this->assertTrue($shipment->getAmount()->compareTo(new Price('9.99', 'USD')));
@@ -359,6 +401,9 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     $shipment = \Drupal::entityTypeManager()->getStorage('commerce_shipment')->loadUnchanged($shipment->id());
 
     // Ensure the shipment has been updated.
+    $shipping_profile = $shipment->getShippingProfile();
+    $this->assertEquals('customer', $shipping_profile->bundle());
+    $this->assertEquals('1098 Alta Ave', $shipping_profile->get('address')->address_line1);
     $this->assertFalse($shipment->getData('owned_by_packer', TRUE));
     $this->assertSame(0, $shipment->getAmount()->compareTo(new Price('199.80', 'USD')));
   }

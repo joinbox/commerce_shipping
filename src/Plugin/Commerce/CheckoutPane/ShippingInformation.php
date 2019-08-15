@@ -9,6 +9,7 @@ use Drupal\commerce_shipping\OrderShipmentSummaryInterface;
 use Drupal\commerce_shipping\PackerManagerInterface;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
+use Drupal\Core\Entity\EntityTypeBundleInfo;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -28,6 +29,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * )
  */
 class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPluginInterface {
+
+  /**
+   * The entity type bundle info.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeBundleInfo
+   */
+  protected $entityTypeBundleInfo;
 
   /**
    * The inline form manager.
@@ -63,6 +71,8 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
    *   The parent checkout flow.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\Core\Entity\EntityTypeBundleInfo $entity_type_bundle_info
+   *   The entity type bundle info.
    * @param \Drupal\commerce\InlineFormManager $inline_form_manager
    *   The inline form manager.
    * @param \Drupal\commerce_shipping\PackerManagerInterface $packer_manager
@@ -70,9 +80,10 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
    * @param \Drupal\commerce_shipping\OrderShipmentSummaryInterface $order_shipment_summary
    *   The order shipment summary.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, CheckoutFlowInterface $checkout_flow, EntityTypeManagerInterface $entity_type_manager, InlineFormManager $inline_form_manager, PackerManagerInterface $packer_manager, OrderShipmentSummaryInterface $order_shipment_summary) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, CheckoutFlowInterface $checkout_flow, EntityTypeManagerInterface $entity_type_manager, EntityTypeBundleInfo $entity_type_bundle_info, InlineFormManager $inline_form_manager, PackerManagerInterface $packer_manager, OrderShipmentSummaryInterface $order_shipment_summary) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $checkout_flow, $entity_type_manager);
 
+    $this->entityTypeBundleInfo = $entity_type_bundle_info;
     $this->inlineFormManager = $inline_form_manager;
     $this->packerManager = $packer_manager;
     $this->orderShipmentSummary = $order_shipment_summary;
@@ -88,6 +99,7 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
       $plugin_definition,
       $checkout_flow,
       $container->get('entity_type.manager'),
+      $container->get('entity_type.bundle.info'),
       $container->get('plugin.manager.commerce_inline_form'),
       $container->get('commerce_shipping.packer_manager'),
       $container->get('commerce_shipping.order_shipment_summary')
@@ -351,13 +363,21 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
   protected function getShippingProfile() {
     $shipping_profile = NULL;
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
-    foreach ($this->order->shipments->referencedEntities() as $shipment) {
+    foreach ($this->order->get('shipments')->referencedEntities() as $shipment) {
       $shipping_profile = $shipment->getShippingProfile();
       break;
     }
     if (!$shipping_profile) {
+      $profile_type_id = 'customer';
+      // Check whether the order type has another profile type ID specified.
+      $order_type_id = $this->order->bundle();
+      $order_bundle_info = $this->entityTypeBundleInfo->getBundleInfo('commerce_order');
+      if (!empty($order_bundle_info[$order_type_id]['shipping_profile_type'])) {
+        $profile_type_id = $order_bundle_info[$order_type_id]['shipping_profile_type'];
+      }
+
       $shipping_profile = $this->entityTypeManager->getStorage('profile')->create([
-        'type' => 'customer',
+        'type' => $profile_type_id,
         'uid' => 0,
       ]);
     }

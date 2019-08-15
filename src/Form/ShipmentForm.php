@@ -73,9 +73,11 @@ class ShipmentForm extends ContentEntityForm {
     /** @var \Drupal\profile\Entity\ProfileInterface $shipping_profile */
     $shipping_profile = $shipment->getShippingProfile();
     if (!$shipping_profile) {
+      /** @var \Drupal\commerce_shipping\Entity\ShipmentTypeInterface $shipment_type */
+      $shipment_type = $this->entityTypeManager->getStorage('commerce_shipment_type')->load($shipment->bundle());
       /** @var \Drupal\profile\Entity\ProfileInterface $shipping_profile */
       $shipping_profile = $this->entityTypeManager->getStorage('profile')->create([
-        'type' => 'customer',
+        'type' => $shipment_type->getProfileTypeId(),
         'uid' => 0,
       ]);
       $address = [

@@ -6,12 +6,14 @@ use Drupal\commerce_order\Adjustment;
 use Drupal\commerce_price\Price;
 use Drupal\commerce_order\Entity\Order;
 use Drupal\commerce_shipping\Entity\Shipment;
+use Drupal\commerce_shipping\Entity\ShipmentType;
 use Drupal\commerce_shipping\Entity\ShippingMethod;
 use Drupal\commerce_shipping\ProposedShipment;
 use Drupal\commerce_shipping\ShipmentItem;
 use Drupal\Core\Entity\EntityStorageException;
 use Drupal\physical\Weight;
 use Drupal\profile\Entity\Profile;
+use Drupal\profile\Entity\ProfileType;
 use Drupal\Tests\commerce_shipping\Kernel\ShippingKernelTestBase;
 
 /**
@@ -196,6 +198,27 @@ class ShipmentTest extends ShippingKernelTestBase {
     $order = $this->reloadEntity($order);
     $this->assertCount(0, $order->getAdjustments());
     $this->assertCount(0, $order->get('shipments')->referencedEntities());
+  }
+
+  /**
+   * @covers ::bundleFieldDefinitions
+   */
+  public function testCustomProfileType() {
+    $profile_type = ProfileType::create([
+      'id' => 'customer_shipping',
+    ]);
+    $profile_type->setThirdPartySetting('commerce_order', 'customer_profile_type', TRUE);
+    $profile_type->save();
+
+    $shipment_type = ShipmentType::load('default');
+    $shipment_type->setProfileTypeId('customer_shipping');
+    $shipment_type->save();
+
+    $profile = Shipment::create(['type' => 'default']);
+    /** @var \Drupal\Core\Field\FieldItemListInterface $shipping_profile_field */
+    $shipping_profile_field = $profile->get('shipping_profile');
+    $handler_settings = $shipping_profile_field->getFieldDefinition()->getSetting('handler_settings');
+    $this->assertEquals('customer_shipping', reset($handler_settings['target_bundles']));
   }
 
   /**

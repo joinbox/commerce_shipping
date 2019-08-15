@@ -91,8 +91,9 @@ class ShippingProfileWidget extends WidgetBase implements ContainerFactoryPlugin
       $profile = $items[$delta]->entity;
     }
     else {
+      $settings = $this->fieldDefinition->getSetting('handler_settings');
       $profile = $this->entityTypeManager->getStorage('profile')->create([
-        'type' => 'customer',
+        'type' => reset($settings['target_bundles']),
         'uid' => 0,
       ]);
     }
