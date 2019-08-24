@@ -2,12 +2,9 @@
 
 namespace Drupal\Tests\commerce_shipping\Kernel\Formatter;
 
-use Drupal\commerce_price\Price;
 use Drupal\commerce_shipping\Entity\Shipment;
 use Drupal\commerce_shipping\Entity\ShippingMethod;
-use Drupal\commerce_shipping\ShipmentItem;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
-use Drupal\physical\Weight;
 use Drupal\Tests\commerce\Kernel\CommerceKernelTestBase;
 
 /**
