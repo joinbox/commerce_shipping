@@ -11,6 +11,7 @@ use Drupal\commerce_product\Entity\ProductVariationType;
 use Drupal\commerce_shipping\Entity\ShipmentType;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\profile\Entity\Profile;
 use Drupal\profile\Entity\ProfileType;
 use Drupal\Tests\commerce\FunctionalJavascript\CommerceWebDriverTestBase;
 
@@ -34,6 +35,21 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
    * @var \Drupal\commerce_product\Entity\ProductInterface
    */
   protected $secondProduct;
+
+  /**
+   * The default profile's address.
+   *
+   * @var array
+   */
+  protected $defaultAddress = [
+    'country_code' => 'US',
+    'administrative_area' => 'SC',
+    'locality' => 'Greenville',
+    'postal_code' => '29616',
+    'address_line1' => '9 Drupal Ave',
+    'given_name' => 'Bryan',
+    'family_name' => 'Centarro',
+  ];
 
   /**
    * {@inheritdoc}
@@ -230,6 +246,13 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
    * Tests checkout with a single shipment.
    */
   public function testSingleShipment() {
+    // Create a default profile to confirm that it is used at checkout.
+    $default_profile = $this->createEntity('profile', [
+      'type' => 'customer',
+      'uid' => $this->adminUser->id(),
+      'address' => $this->defaultAddress,
+    ]);
+
     $this->drupalGet($this->firstProduct->toUrl()->toString());
     $this->submitForm([], 'Add to cart');
     $this->drupalGet($this->secondProduct->toUrl()->toString());
@@ -237,65 +260,47 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
 
     $this->drupalGet('checkout/1');
     $this->assertSession()->pageTextContains('Shipping information');
+    $this->assertRenderedAddress($this->defaultAddress, 'shipping_information[shipping_profile]');
+    $this->assertRenderedAddress($this->defaultAddress, 'payment_information[add_payment_method][billing_information]');
+
+    // Confirm that the shipping method selection is not available until
+    // the "Recalculate shipping' button is clicked.
     $this->assertSession()->pageTextNotContains('Shipping method');
-
-    $address = [
-      'given_name' => 'John',
-      'family_name' => 'Smith',
-      'address_line1' => '1098 Alta Ave',
-      'locality' => 'Mountain View',
-      'administrative_area' => 'CA',
-      'postal_code' => '94043',
-    ];
-    $address_prefix = 'shipping_information[shipping_profile][address][0][address]';
-    // Confirm that the country list has been restricted.
-    $this->assertOptions($address_prefix . '[country_code]', ['US', 'FR', 'DE']);
-
     $page = $this->getSession()->getPage();
-    $page->fillField($address_prefix . '[country_code]', 'US');
-    $this->waitForAjaxToFinish();
-    foreach ($address as $property => $value) {
-      $page->fillField($address_prefix . '[' . $property . ']', $value);
-    }
     $page->findButton('Recalculate shipping')->click();
     $this->waitForAjaxToFinish();
-
     $this->assertSession()->pageTextContains('Shipping method');
     $first_radio_button = $page->findField('Standard shipping: $9.99');
     $second_radio_button = $page->findField('Overnight shipping: $19.99');
     $this->assertNotNull($first_radio_button);
     $this->assertNotNull($second_radio_button);
     $this->assertTrue($first_radio_button->getAttribute('checked'));
+
     $this->submitForm([
       'payment_information[add_payment_method][payment_details][number]' => '4111111111111111',
       'payment_information[add_payment_method][payment_details][expiration][month]' => '02',
       'payment_information[add_payment_method][payment_details][expiration][year]' => '2020',
       'payment_information[add_payment_method][payment_details][security_code]' => '123',
-      'payment_information[add_payment_method][billing_information][address][0][address][given_name]' => 'Johnny',
-      'payment_information[add_payment_method][billing_information][address][0][address][family_name]' => 'Appleseed',
-      'payment_information[add_payment_method][billing_information][address][0][address][address_line1]' => '123 New York Drive',
-      'payment_information[add_payment_method][billing_information][address][0][address][locality]' => 'New York City',
-      'payment_information[add_payment_method][billing_information][address][0][address][administrative_area]' => 'NY',
-      'payment_information[add_payment_method][billing_information][address][0][address][postal_code]' => '10001',
     ], 'Continue to review');
 
     // Confirm that the review is rendered correctly.
     $this->assertSession()->pageTextContains('Shipping information');
-    foreach ($address as $property => $value) {
-      $this->assertSession()->pageTextContains($value);
+    foreach ($this->defaultAddress as $property => $value) {
+      if ($property != 'country_code') {
+        $this->assertSession()->pageTextContains($value);
+      }
     }
     $this->assertSession()->pageTextContains('Standard shipping');
     $this->assertSession()->pageTextNotContains('Secret shipping');
-
-    // Confirm the integrity of the shipment.
     $this->submitForm([], 'Pay and complete purchase');
+
     $order = Order::load(1);
-    $shipments = $order->shipments->referencedEntities();
+    // Confirm the integrity of the shipment.
+    $shipments = $order->get('shipments')->referencedEntities();
     $this->assertCount(1, $shipments);
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
     $shipment = reset($shipments);
     $this->assertEquals('custom_box', $shipment->getPackageType()->getId());
-    $this->assertEquals('Mountain View', $shipment->getShippingProfile()->address->locality);
     $this->assertEquals('Standard shipping', $shipment->getShippingMethod()->label());
     $this->assertEquals('default', $shipment->getShippingService());
     $this->assertEquals('9.99', $shipment->getAmount()->getNumber());
@@ -303,12 +308,29 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->assertEquals('draft', $shipment->getState()->value);
     // Confirm that the order total contains the shipment amount.
     $this->assertEquals(new Price('26.97', 'USD'), $order->getTotalPrice());
+    // Confirm the integrity of the profiles.
+    $billing_profile = $order->getBillingProfile();
+    $shipping_profile = $shipment->getShippingProfile();
+    $this->assertNotEquals($billing_profile->id(), $shipping_profile->id());
+    $this->assertEquals($this->defaultAddress['address_line1'], $billing_profile->get('address')->address_line1);
+    $this->assertEquals($this->defaultAddress['address_line1'], $shipping_profile->get('address')->address_line1);
+    $this->assertEquals($default_profile->id(), $billing_profile->getData('address_book_profile_id'));
+    $this->assertEquals($default_profile->id(), $shipping_profile->getData('address_book_profile_id'));
+    $this->assertEmpty($billing_profile->getData('copy_to_address_book'));
+    $this->assertEmpty($shipping_profile->getData('copy_to_address_book'));
   }
 
   /**
    * Tests checkout with multiple shipments.
    */
   public function testMultipleShipments() {
+    // Create a default profile to confirm that it is used at checkout.
+    $default_profile = $this->createEntity('profile', [
+      'type' => 'customer',
+      'uid' => $this->adminUser->id(),
+      'address' => $this->defaultAddress,
+    ]);
+
     $this->drupalGet($this->firstProduct->toUrl()->toString());
     $this->submitForm([], 'Add to cart');
     $this->drupalGet($this->secondProduct->toUrl()->toString());
@@ -316,8 +338,12 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
 
     $this->drupalGet('checkout/1');
     $this->assertSession()->pageTextContains('Shipping information');
-    $this->assertSession()->pageTextNotContains('Shipping method');
+    $this->assertRenderedAddress($this->defaultAddress, 'shipping_information[shipping_profile]');
+    $this->assertRenderedAddress($this->defaultAddress, 'payment_information[add_payment_method][billing_information]');
 
+    // Confirm that it is possible to enter a different address.
+    $this->getSession()->getPage()->fillField('shipping_information[shipping_profile][select_address]', '_new');
+    $this->waitForAjaxToFinish();
     $address = [
       'given_name' => 'John',
       'family_name' => 'Smith',
@@ -352,12 +378,6 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
       'payment_information[add_payment_method][payment_details][expiration][month]' => '02',
       'payment_information[add_payment_method][payment_details][expiration][year]' => '2020',
       'payment_information[add_payment_method][payment_details][security_code]' => '123',
-      'payment_information[add_payment_method][billing_information][address][0][address][given_name]' => 'Johnny',
-      'payment_information[add_payment_method][billing_information][address][0][address][family_name]' => 'Appleseed',
-      'payment_information[add_payment_method][billing_information][address][0][address][address_line1]' => '123 New York Drive',
-      'payment_information[add_payment_method][billing_information][address][0][address][locality]' => 'New York City',
-      'payment_information[add_payment_method][billing_information][address][0][address][administrative_area]' => 'NY',
-      'payment_information[add_payment_method][billing_information][address][0][address][postal_code]' => '10001',
     ], 'Continue to review');
 
     // Confirm that the review is rendered correctly.
@@ -370,13 +390,20 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->assertSession()->elementsCount('xpath', '//div[@class="field__item" and .="Standard shipping"]', 2);
     // Confirm the integrity of the shipment.
     $this->submitForm([], 'Pay and complete purchase');
+
     $order = Order::load(1);
-    $shipments = $order->shipments->referencedEntities();
+    $billing_profile = $order->getBillingProfile();
+    $this->assertNotEmpty($billing_profile);
+    $this->assertEquals('customer', $billing_profile->bundle());
+    $this->assertEquals($this->defaultAddress['address_line1'], $billing_profile->get('address')->address_line1);
+
+    // Confirm the integrity of the shipments.
+    $shipments = $order->get('shipments')->referencedEntities();
     $this->assertCount(2, $shipments);
-    /** @var \Drupal\commerce_shipping\Entity|ShipmentInterface $first_shipment */
+    /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $first_shipment */
     $first_shipment = reset($shipments);
     $this->assertEquals('custom_box', $first_shipment->getPackageType()->getId());
-    $this->assertEquals('Paris', $first_shipment->getShippingProfile()->address->locality);
+    $this->assertEquals('Paris', $first_shipment->getShippingProfile()->get('address')->locality);
     $this->assertEquals('Standard shipping', $first_shipment->getShippingMethod()->label());
     $this->assertEquals('default', $first_shipment->getShippingService());
     $this->assertEquals('9.99', $first_shipment->getAmount()->getNumber());
@@ -386,10 +413,10 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $item = reset($items);
     $this->assertEquals('Conference hat', $item->getTitle());
     $this->assertEquals(1, $item->getQuantity());
-    /** @var \Drupal\commerce_shipping\Entity|ShipmentInterface $second_shipment */
+    /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $second_shipment */
     $second_shipment = end($shipments);
     $this->assertEquals('custom_box', $second_shipment->getPackageType()->getId());
-    $this->assertEquals('Paris', $second_shipment->getShippingProfile()->address->locality);
+    $this->assertEquals('Paris', $second_shipment->getShippingProfile()->get('address')->locality);
     $this->assertEquals('Standard shipping', $second_shipment->getShippingMethod()->label());
     $this->assertEquals('default', $second_shipment->getShippingService());
     $this->assertEquals('9.99', $second_shipment->getAmount()->getNumber());
@@ -399,6 +426,8 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $item = reset($items);
     $this->assertEquals('Conference bow tie', $item->getTitle());
     $this->assertEquals(1, $item->getQuantity());
+    // Confirm that the shipping profile is shared between shipments.
+    $this->assertEquals($first_shipment->getShippingProfile()->id(), $second_shipment->getShippingProfile()->id());
     // Confirm that the order total contains the shipment amounts.
     $this->assertEquals(new Price('36.96', 'USD'), $order->getTotalPrice());
   }
@@ -438,6 +467,8 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
       'postal_code' => '94043',
     ];
     $address_prefix = 'shipping_information[shipping_profile][address][0][address]';
+    // Confirm that the country list has been restricted.
+    $this->assertOptions($address_prefix . '[country_code]', ['US', 'FR', 'DE']);
     $page->fillField($address_prefix . '[country_code]', 'US');
     $this->waitForAjaxToFinish();
     foreach ($address as $property => $value) {
@@ -462,16 +493,16 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
       $this->assertSession()->pageTextContains($value);
     }
     $this->assertSession()->pageTextContains('Standard shipping');
-
-    // Confirm the integrity of the shipment.
     $this->submitForm([], 'Pay and complete purchase');
+
     $order = Order::load(1);
-    $shipments = $order->shipments->referencedEntities();
+    // Confirm the integrity of the shipment.
+    $shipments = $order->get('shipments')->referencedEntities();
     $this->assertCount(1, $shipments);
-    /** @var \Drupal\commerce_shipping\Entity|ShipmentInterface $shipment */
+    /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
     $shipment = reset($shipments);
     $this->assertEquals('custom_box', $shipment->getPackageType()->getId());
-    $this->assertEquals('Mountain View', $shipment->getShippingProfile()->address->locality);
+    $this->assertEquals('Mountain View', $shipment->getShippingProfile()->get('address')->locality);
     $this->assertEquals('Standard shipping', $shipment->getShippingMethod()->label());
     $this->assertEquals('default', $shipment->getShippingService());
     $this->assertEquals('9.99', $shipment->getAmount()->getNumber());
@@ -507,6 +538,8 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
       'postal_code' => '94043',
     ];
     $address_prefix = 'shipping_information[shipping_profile][address][0][address]';
+    // Confirm that the country list has been restricted.
+    $this->assertOptions($address_prefix . '[country_code]', ['US', 'FR', 'DE']);
     $page = $this->getSession()->getPage();
     $page->fillField($address_prefix . '[country_code]', 'US');
     $this->waitForAjaxToFinish();
@@ -541,10 +574,22 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     }
     $this->assertSession()->pageTextContains('202-555-0108');
     $this->assertSession()->pageTextContains('Standard shipping');
+    $this->submitForm([], 'Pay and complete purchase');
+
+    $order = Order::load(1);
+    $billing_profile = $order->getBillingProfile();
+    $this->assertNotEmpty($billing_profile);
+    $this->assertEquals('customer', $billing_profile->bundle());
+    $this->assertEquals('123 New York Drive', $billing_profile->get('address')->address_line1);
+    // Confirm that the billing profile was copied to the address book.
+    $address_book_profile_id = $billing_profile->getData('address_book_profile_id');
+    $this->assertNotEmpty($address_book_profile_id);
+    $address_book_profile = Profile::load($address_book_profile_id);
+    $this->assertNotEmpty($address_book_profile);
+    $this->assertTrue($address_book_profile->isDefault());
+    $this->assertEquals('123 New York Drive', $address_book_profile->get('address')->address_line1);
 
     // Confirm the integrity of the shipment.
-    $this->submitForm([], 'Pay and complete purchase');
-    $order = Order::load(1);
     $shipments = $order->get('shipments')->referencedEntities();
     $this->assertCount(1, $shipments);
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
@@ -552,7 +597,16 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $shipping_profile = $shipment->getShippingProfile();
     $this->assertNotEmpty($shipping_profile);
     $this->assertEquals('customer_shipping', $shipping_profile->bundle());
+    $this->assertEquals('1098 Alta Ave', $shipping_profile->get('address')->address_line1);
     $this->assertEquals('202-555-0108', $shipping_profile->get('field_phone')->value);
+    // Confirm that the shipping profile was copied to the address book.
+    $address_book_profile_id = $shipping_profile->getData('address_book_profile_id');
+    $this->assertNotEmpty($address_book_profile_id);
+    $address_book_profile = Profile::load($address_book_profile_id);
+    $this->assertNotEmpty($address_book_profile);
+    $this->assertTrue($address_book_profile->isDefault());
+    $this->assertEquals('1098 Alta Ave', $address_book_profile->get('address')->address_line1);
+    $this->assertEquals('202-555-0108', $address_book_profile->get('field_phone')->value);
   }
 
   /**

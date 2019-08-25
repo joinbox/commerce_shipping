@@ -5,7 +5,7 @@ namespace Drupal\commerce_shipping\EventSubscriber;
 use Drupal\commerce_tax\Event\CustomerProfileEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class CustomerProfileSubscriber implements EventSubscriberInterface {
+class TaxSubscriber implements EventSubscriberInterface {
 
   /**
    * {@inheritdoc}
