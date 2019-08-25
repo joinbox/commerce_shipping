@@ -263,13 +263,10 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->assertRenderedAddress($this->defaultAddress, 'shipping_information[shipping_profile]');
     $this->assertRenderedAddress($this->defaultAddress, 'payment_information[add_payment_method][billing_information]');
 
-    // Confirm that the shipping method selection is not available until
-    // the "Recalculate shipping' button is clicked.
-    $this->assertSession()->pageTextNotContains('Shipping method');
-    $page = $this->getSession()->getPage();
-    $page->findButton('Recalculate shipping')->click();
-    $this->waitForAjaxToFinish();
+    // Confirm that shipping method selection is available, because the
+    // selected profile has a complete address.
     $this->assertSession()->pageTextContains('Shipping method');
+    $page = $this->getSession()->getPage();
     $first_radio_button = $page->findField('Standard shipping: $9.99');
     $second_radio_button = $page->findField('Overnight shipping: $19.99');
     $this->assertNotNull($first_radio_button);
@@ -433,7 +430,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
   }
 
   /**
-   * Tests checkout when the shipping profile is not required for showing costs.
+   * Tests checkout when the shipping profile is not required for showing rates.
    */
   public function testNoRequiredShippingProfile() {
     $checkout_flow = CheckoutFlow::load('shipping');
@@ -524,7 +521,6 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->submitForm([], 'Add to cart');
     $this->drupalGet('checkout/1');
     $this->assertSession()->pageTextContains('Shipping information');
-    $this->assertSession()->pageTextNotContains('Shipping method');
     // Confirm that the phone field is present, but only for shipping.
     $this->assertSession()->fieldExists('shipping_information[shipping_profile][field_phone][0][value]');
     $this->assertSession()->fieldNotExists('payment_information[add_payment_method][billing_information][field_phone][0][value]');
@@ -547,13 +543,16 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
       $page->fillField($address_prefix . '[' . $property . ']', $value);
     }
     $page->fillField('shipping_information[shipping_profile][field_phone][0][value]', '202-555-0108');
+    // Confirm that the shipping method selection was not initially available
+    // because there was no address known.
+    $this->assertSession()->pageTextNotContains('Shipping method');
     $page->findButton('Recalculate shipping')->click();
     $this->waitForAjaxToFinish();
-
     $this->assertSession()->pageTextContains('Shipping method');
     $first_radio_button = $page->findField('Standard shipping: $9.99');
     $this->assertNotNull($first_radio_button);
     $this->assertTrue($first_radio_button->getAttribute('checked'));
+
     $this->submitForm([
       'payment_information[add_payment_method][payment_details][number]' => '4111111111111111',
       'payment_information[add_payment_method][payment_details][expiration][month]' => '02',

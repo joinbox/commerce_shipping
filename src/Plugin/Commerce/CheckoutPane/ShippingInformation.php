@@ -14,6 +14,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Render\Element;
+use Drupal\profile\Entity\ProfileInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -190,15 +191,12 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
    */
   public function buildPaneForm(array $pane_form, FormStateInterface $form_state, array &$complete_form) {
     $store = $this->order->getStore();
-    $shipping_profile = $form_state->get('shipping_profile');
-    if (!$shipping_profile) {
-      $shipping_profile = $this->getShippingProfile();
-      $form_state->set('shipping_profile', $shipping_profile);
-    }
     $available_countries = [];
     foreach ($store->get('shipping_countries') as $country_item) {
       $available_countries[] = $country_item->value;
     }
+    $shipping_profile = $this->getShippingProfile();
+    /** @var \Drupal\commerce\Plugin\Commerce\InlineForm\EntityInlineFormInterface $inline_form */
     $inline_form = $this->inlineFormManager->createInstance('customer_profile', [
       'profile_scope' => 'shipping',
       'available_countries' => $available_countries,
@@ -242,7 +240,16 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
 
     $shipments = $this->order->shipments->referencedEntities();
     $recalculate_shipping = $form_state->get('recalculate_shipping');
-    $force_packing = empty($shipments) && empty($this->configuration['require_shipping_profile']);
+    if ($recalculate_shipping) {
+      // Use the shipping profile set in validatePaneForm().
+      $shipping_profile = $form_state->get('shipping_profile');
+    }
+    else {
+      // Take the processed profile from the inline form, it
+      // might have been pre-filled from the address book.
+      $shipping_profile = $inline_form->getEntity();
+    }
+    $force_packing = empty($shipments) && $this->canCalculateRates($shipping_profile);
     if ($recalculate_shipping || $force_packing) {
       list($shipments, $removed_shipments) = $this->packerManager->packToShipments($this->order, $shipping_profile, $shipments);
 
@@ -383,6 +390,26 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
     }
 
     return $shipping_profile;
+  }
+
+  /**
+   * Gets whether shipping rates can be calculated for the given profile.
+   *
+   * Ensures that a required shipping address is present and valid.
+   *
+   * @param \Drupal\profile\Entity\ProfileInterface $profile
+   *   The profile.
+   *
+   * @return bool
+   *   TRUE if shipping rates can be calculated, FALSE otherwise.
+   */
+  protected function canCalculateRates(ProfileInterface $profile) {
+    if (!empty($this->configuration['require_shipping_profile'])) {
+      $violations = $profile->get('address')->validate();
+      return count($violations) === 0;
+    }
+
+    return TRUE;
   }
 
 }
