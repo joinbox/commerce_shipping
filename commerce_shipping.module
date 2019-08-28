@@ -14,6 +14,7 @@ use Drupal\entity\BundleFieldDefinition;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element;
 use Drupal\Core\Url;
 
 /**
@@ -272,4 +273,43 @@ function commerce_shipping_entity_operation(EntityInterface $entity) {
     'weight' => 60,
   ];
   return $operations;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function commerce_shipping_theme() {
+  return [
+    'commerce_shipment' => [
+      'render element' => 'elements',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_theme_suggestions_commerce_shipment().
+ */
+function commerce_shipping_theme_suggestions_commerce_shipment(array $variables) {
+  return _commerce_entity_theme_suggestions('commerce_shipment', $variables);
+}
+
+/**
+ * Prepares variables for shipment templates.
+ *
+ * Default template: commerce-shipment.html.twig.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - elements: An associative array containing rendered fields.
+ *   - attributes: HTML attributes for the containing element.
+ */
+function template_preprocess_commerce_shipment(array &$variables) {
+  /** @var Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
+  $shipment = $variables['elements']['#commerce_shipment'];
+
+  $variables['shipment_entity'] = $shipment;
+  $variables['shipment'] = [];
+  foreach (Element::children($variables['elements']) as $key) {
+    $variables['shipment'][$key] = $variables['elements'][$key];
+  }
 }
