@@ -181,7 +181,7 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
   public function buildPaneSummary() {
     $summary = [];
     if ($this->isVisible()) {
-      $summary = $this->orderShipmentSummary->build($this->order);
+      $summary = $this->orderShipmentSummary->build($this->order, 'checkout');
     }
     return $summary;
   }
