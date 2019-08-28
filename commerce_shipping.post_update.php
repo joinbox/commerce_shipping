@@ -90,3 +90,14 @@ function commerce_shipping_post_update_2(&$sandbox = NULL) {
     $sandbox['#finished'] = ($sandbox['total_count'] - $sandbox['current_count']) / $sandbox['total_count'];
   }
 }
+
+/**
+ * Create the 'checkout' form mode and display for the shipment entity.
+ */
+function commerce_shipping_post_update_3() {
+  $config_updater = \Drupal::service('commerce.config_updater');
+  $config_updater->import([
+    'core.entity_form_mode.commerce_shipment.checkout',
+    'core.entity_form_display.commerce_shipment.default.checkout',
+  ]);
+}

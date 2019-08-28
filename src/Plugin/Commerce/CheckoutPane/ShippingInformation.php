@@ -269,10 +269,8 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
         '#type' => $single_shipment ? 'container' : 'fieldset',
         '#title' => $shipment->getTitle(),
       ];
-      $form_display = EntityFormDisplay::collectRenderDisplay($shipment, 'default');
+      $form_display = EntityFormDisplay::collectRenderDisplay($shipment, 'checkout');
       $form_display->removeComponent('shipping_profile');
-      $form_display->removeComponent('title');
-      $form_display->removeComponent('tracking_code');
       $form_display->buildForm($shipment, $pane_form['shipments'][$index], $form_state);
       $pane_form['shipments'][$index]['#shipment'] = $shipment;
     }
@@ -316,9 +314,8 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
 
     foreach ($shipment_indexes as $index) {
       $shipment = clone $pane_form['shipments'][$index]['#shipment'];
-      $form_display = EntityFormDisplay::collectRenderDisplay($shipment, 'default');
+      $form_display = EntityFormDisplay::collectRenderDisplay($shipment, 'checkout');
       $form_display->removeComponent('shipping_profile');
-      $form_display->removeComponent('title');
       $form_display->extractFormValues($shipment, $pane_form['shipments'][$index], $form_state);
       $form_display->validateFormValues($shipment, $pane_form['shipments'][$index], $form_state);
     }
@@ -338,9 +335,8 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
     foreach (Element::children($pane_form['shipments']) as $index) {
       /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
       $shipment = clone $pane_form['shipments'][$index]['#shipment'];
-      $form_display = EntityFormDisplay::collectRenderDisplay($shipment, 'default');
+      $form_display = EntityFormDisplay::collectRenderDisplay($shipment, 'checkout');
       $form_display->removeComponent('shipping_profile');
-      $form_display->removeComponent('title');
       $form_display->extractFormValues($shipment, $pane_form['shipments'][$index], $form_state);
       $shipment->setShippingProfile($profile);
       $shipment->save();
