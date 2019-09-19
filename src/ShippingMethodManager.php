@@ -28,6 +28,7 @@ class ShippingMethodManager extends DefaultPluginManager {
   public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler) {
     parent::__construct('Plugin/Commerce/ShippingMethod', $namespaces, $module_handler, 'Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterface', 'Drupal\commerce_shipping\Annotation\CommerceShippingMethod');
 
+    $this->alterInfo('commerce_shipping_method_info');
     $this->setCacheBackend($cache_backend, 'commerce_shipping_method_plugins');
   }
 
