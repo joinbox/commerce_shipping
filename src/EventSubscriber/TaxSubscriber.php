@@ -17,10 +17,13 @@ class TaxSubscriber implements EventSubscriberInterface {
   }
 
   /**
-   * Overrides the customer profile used for calculating tax.
+   * Overrides the address used for calculating tax.
    *
-   * By default orders are taxed using the billing profile, but
-   * shippable orders need to use the shipping profile instead.
+   * By default, TaxTypeBase::buildCustomerProfile() will select the
+   * shipping address when available (thanks to shipping's ProfileSubscriber).
+   *
+   * This subscriber extends the default logic to support orders with multiple
+   * shipping addresses (multiple shipments with distinct shipping profiles).
    *
    * @param \Drupal\commerce_tax\Event\CustomerProfileEvent $event
    *   The transition event.
@@ -31,14 +34,27 @@ class TaxSubscriber implements EventSubscriberInterface {
     if (!$order->hasField('shipments') || $order->get('shipments')->isEmpty()) {
       return;
     }
+    /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */
+    $shipments = $order->get('shipments')->referencedEntities();
+    $shipping_profiles = [];
+    foreach ($shipments as $shipment) {
+      $shipping_profile = $shipment->getShippingProfile();
+      if ($shipping_profile) {
+        $shipping_profiles[$shipping_profile->id()] = $shipping_profile;
+      }
+    }
+    if (count($shipping_profiles) < 2) {
+      // Multiple profiles were not found, fall back to the default logic.
+      return;
+    }
 
-    /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
-    foreach ($order->get('shipments')->referencedEntities() as $shipment) {
+    $customer_profile = $event->getCustomerProfile();
+    foreach ($shipments as $shipment) {
       foreach ($shipment->getItems() as $shipment_item) {
-        // Different shipments could have different shipping profiles, so take
-        // the one from the shipment that references the passed order item.
+        // Take the address from the shipment which contains the given item.
         if ($shipment_item->getOrderItemId() == $order_item->id()) {
-          $event->setCustomerProfile($shipment->getShippingProfile());
+          $address_field = $shipment->getShippingProfile()->get('address');
+          $customer_profile->set('address', $address_field->getValue());
           return;
         }
       }
