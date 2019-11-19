@@ -26,15 +26,6 @@ use Drupal\Tests\commerce_shipping\Kernel\ShippingKernelTestBase;
 class ShipmentTest extends ShippingKernelTestBase {
 
   /**
-   * {@inheritdoc}
-   */
-  protected function setUp() {
-    parent::setUp();
-
-    $this->installEntitySchema('commerce_shipping_method');
-  }
-
-  /**
    * @covers ::getOrder
    * @covers ::getOrderId
    * @covers ::getPackageType

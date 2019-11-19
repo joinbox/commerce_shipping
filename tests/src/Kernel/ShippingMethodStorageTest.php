@@ -71,9 +71,6 @@ class ShippingMethodStorageTest extends ShippingKernelTestBase {
   protected function setUp() {
     parent::setUp();
 
-    $this->installEntitySchema('commerce_shipping_method');
-    $this->installConfig('commerce_shipping');
-
     $user = $this->createUser(['mail' => strtolower($this->randomString()) . '@example.com']);
     $this->user = $this->reloadEntity($user);
 

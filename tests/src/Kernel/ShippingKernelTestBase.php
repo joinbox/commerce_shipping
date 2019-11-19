@@ -4,24 +4,19 @@ namespace Drupal\Tests\commerce_shipping\Kernel;
 
 use Drupal\commerce_order\Entity\OrderType;
 use Drupal\commerce_product\Entity\ProductVariationType;
-use Drupal\Tests\commerce\Kernel\CommerceKernelTestBase;
+use Drupal\Tests\commerce_order\Kernel\OrderKernelTestBase;
 
 /**
  * Provides a base class for Shipping kernel tests.
  */
-abstract class ShippingKernelTestBase extends CommerceKernelTestBase {
+abstract class ShippingKernelTestBase extends OrderKernelTestBase {
 
   /**
    * {@inheritdoc}
    */
   public static $modules = [
-    'entity_reference_revisions',
     'physical',
     'path',
-    'profile',
-    'state_machine',
-    'commerce_product',
-    'commerce_order',
     'commerce_shipping',
     'commerce_shipping_test',
   ];
@@ -32,11 +27,7 @@ abstract class ShippingKernelTestBase extends CommerceKernelTestBase {
   protected function setUp() {
     parent::setUp();
 
-    $this->installEntitySchema('profile');
-    $this->installEntitySchema('commerce_product_variation');
-    $this->installEntitySchema('commerce_product');
-    $this->installEntitySchema('commerce_order_item');
-    $this->installEntitySchema('commerce_order');
+    $this->installEntitySchema('commerce_shipping_method');
     $this->installEntitySchema('commerce_shipment');
     $this->installConfig([
       'profile',

@@ -49,8 +49,6 @@ class OrderShipmentSummaryTest extends ShippingKernelTestBase {
   protected function setUp() {
     parent::setUp();
 
-    $this->installEntitySchema('commerce_shipping_method');
-
     $this->orderShipmentSummary = $this->container->get('commerce_shipping.order_shipment_summary');
 
     $user = $this->createUser(['mail' => $this->randomString() . '@example.com']);
@@ -88,11 +86,6 @@ class OrderShipmentSummaryTest extends ShippingKernelTestBase {
     $profile->save();
     $profile = $this->reloadEntity($profile);
 
-    OrderItemType::create([
-      'id' => 'test',
-      'label' => 'Test',
-      'orderType' => 'default',
-    ])->save();
     $order_item = OrderItem::create([
       'type' => 'test',
       'quantity' => 1,

@@ -25,29 +25,10 @@ class FilterShippingMethodsEventTest extends ShippingKernelTestBase {
   protected $storage;
 
   /**
-   * Modules to enable.
-   *
-   * @var array
-   */
-  public static $modules = [
-    'address',
-    'entity_reference_revisions',
-    'profile',
-    'state_machine',
-    'commerce_order',
-    'commerce_shipping',
-    'commerce_shipping_test',
-  ];
-
-  /**
    * {@inheritdoc}
    */
   protected function setUp() {
     parent::setUp();
-
-    $this->installEntitySchema('commerce_shipping_method');
-    $this->installConfig('commerce_shipping');
-    $this->installConfig('commerce_shipping_test');
 
     $this->storage = $this->container->get('entity_type.manager')->getStorage('commerce_shipping_method');
   }

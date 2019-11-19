@@ -39,12 +39,6 @@ class OrderWorkflowTest extends ShippingKernelTestBase {
     parent::setUp();
 
     $user = $this->createUser(['mail' => $this->randomString() . '@example.com']);
-
-    OrderItemType::create([
-      'id' => 'test',
-      'label' => 'Test',
-      'orderType' => 'default',
-    ])->save();
     $order_item = OrderItem::create([
       'type' => 'test',
       'quantity' => 1,

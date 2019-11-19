@@ -5,7 +5,7 @@ namespace Drupal\Tests\commerce_shipping\Kernel\Formatter;
 use Drupal\commerce_shipping\Entity\Shipment;
 use Drupal\commerce_shipping\Entity\ShippingMethod;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
-use Drupal\Tests\commerce\Kernel\CommerceKernelTestBase;
+use Drupal\Tests\commerce_shipping\Kernel\ShippingKernelTestBase;
 
 /**
  * Tests the shipping method formatter.
@@ -14,41 +14,7 @@ use Drupal\Tests\commerce\Kernel\CommerceKernelTestBase;
  *
  * @group commerce_shipping
  */
-class ShippingMethodFormatterTest extends CommerceKernelTestBase {
-
-  /**
-   * Modules to enable.
-   *
-   * @var array
-   */
-  public static $modules = [
-    'entity_reference_revisions',
-    'physical',
-    'profile',
-    'state_machine',
-    'commerce_order',
-    'commerce_product',
-    'commerce_shipping',
-    'commerce_shipping_test',
-  ];
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function setUp() {
-    parent::setUp();
-
-    $this->installEntitySchema('profile');
-    $this->installEntitySchema('commerce_order');
-    $this->installEntitySchema('commerce_shipping_method');
-    $this->installEntitySchema('commerce_shipment');
-    $this->installConfig([
-      'physical',
-      'profile',
-      'commerce_order',
-      'commerce_shipping',
-    ]);
-  }
+class ShippingMethodFormatterTest extends ShippingKernelTestBase {
 
   /**
    * Tests the rendered output.

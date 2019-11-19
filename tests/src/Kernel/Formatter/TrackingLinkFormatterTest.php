@@ -6,30 +6,14 @@ use Drupal\commerce_shipping\Entity\Shipment;
 use Drupal\commerce_shipping\Entity\ShippingMethod;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
-use Drupal\Tests\commerce\Kernel\CommerceKernelTestBase;
+use Drupal\Tests\commerce_shipping\Kernel\ShippingKernelTestBase;
 
 /**
  * Tests the tracking link formatter.
  *
  * @group commerce_shipping
  */
-class TrackingLinkFormatterTest extends CommerceKernelTestBase {
-
-  /**
-   * Modules to enable.
-   *
-   * @var array
-   */
-  public static $modules = [
-    'entity_reference_revisions',
-    'physical',
-    'profile',
-    'state_machine',
-    'commerce_order',
-    'commerce_product',
-    'commerce_shipping',
-    'commerce_shipping_test',
-  ];
+class TrackingLinkFormatterTest extends ShippingKernelTestBase {
 
   /**
    * @var \Drupal\Core\Entity\Display\EntityViewDisplayInterface
@@ -42,16 +26,6 @@ class TrackingLinkFormatterTest extends CommerceKernelTestBase {
   protected function setUp() {
     parent::setUp();
 
-    $this->installEntitySchema('profile');
-    $this->installEntitySchema('commerce_order');
-    $this->installEntitySchema('commerce_shipping_method');
-    $this->installEntitySchema('commerce_shipment');
-    $this->installConfig([
-      'physical',
-      'profile',
-      'commerce_order',
-      'commerce_shipping',
-    ]);
     $this->display = entity_get_display('commerce_shipment', 'default', 'default');
     $this->display->setComponent('tracking_code', [
       'type' => 'commerce_tracking_link',
