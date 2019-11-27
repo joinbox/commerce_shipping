@@ -251,6 +251,9 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
     }
     $force_packing = empty($shipments) && $this->canCalculateRates($shipping_profile);
     if ($recalculate_shipping || $force_packing) {
+      // We're still relying on the packer manager for packing the order since
+      // we don't want the shipments to be saved for performance reasons.
+      // The shipments are saved on pane submission.
       list($shipments, $removed_shipments) = $this->packerManager->packToShipments($this->order, $shipping_profile, $shipments);
 
       // Store the IDs of removed shipments for submitPaneForm().

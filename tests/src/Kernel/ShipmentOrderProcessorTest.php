@@ -6,10 +6,6 @@ use Drupal\commerce_product\Entity\ProductVariation;
 use Drupal\commerce_order\Entity\Order;
 use Drupal\commerce_order\Entity\OrderItem;
 use Drupal\commerce_price\Price;
-use Drupal\commerce_shipping\Packer\DefaultPacker;
-use Drupal\commerce_shipping\PackerManager;
-use Drupal\commerce_shipping\ShipmentOrderProcessor;
-use Drupal\commerce_shipping_test\Packer\TestPacker;
 use Drupal\physical\Weight;
 use Drupal\profile\Entity\Profile;
 
@@ -55,11 +51,8 @@ class ShipmentOrderProcessorTest extends ShippingKernelTestBase {
   protected function setUp() {
     parent::setUp();
 
-    $entity_type_manager = $this->container->get('entity_type.manager');
-    $packer_manager = new PackerManager($entity_type_manager);
-    $packer_manager->addPacker(new TestPacker());
-    $packer_manager->addPacker(new DefaultPacker($entity_type_manager));
-    $this->processor = new ShipmentOrderProcessor($entity_type_manager, $packer_manager);
+    $this->processor = $this->container->get('commerce_shipping.shipment_order_processor');
+    $shipping_order_manager = $this->container->get('commerce_shipping.order_manager');
 
     $this->variations[] = ProductVariation::create([
       'type' => 'default',
@@ -104,7 +97,7 @@ class ShipmentOrderProcessorTest extends ShippingKernelTestBase {
     $shipping_profile->save();
 
     // Create the first shipment.
-    list($shipments, $removed_shipments) = $packer_manager->packToShipments($order, $shipping_profile, []);
+    $shipments = $shipping_order_manager->pack($order, $shipping_profile);
     $order->set('shipments', $shipments);
     $order->setRefreshState(Order::REFRESH_SKIP);
     $order->save();

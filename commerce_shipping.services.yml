@@ -23,7 +23,7 @@ services:
 
   commerce_shipping.shipment_order_processor:
     class: Drupal\commerce_shipping\ShipmentOrderProcessor
-    arguments: ['@entity_type.manager', '@commerce_shipping.packer_manager']
+    arguments: ['@entity_type.manager', '@commerce_shipping.order_manager']
     tags:
       - { name: commerce_order.order_processor, priority: 200 }
 
@@ -36,6 +36,10 @@ services:
     class: Drupal\commerce_shipping\EventSubscriber\OrderSubscriber
     tags:
       - { name: event_subscriber }
+
+  commerce_shipping.order_manager:
+    class: Drupal\commerce_shipping\ShippingOrderManager
+    arguments: ['@entity_type.manager', '@entity_type.bundle.info', '@commerce_shipping.packer_manager']
 
   commerce_shipping.profile_subscriber:
     class: Drupal\commerce_shipping\EventSubscriber\ProfileSubscriber

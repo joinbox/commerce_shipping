@@ -100,6 +100,6 @@ function commerce_shipping_post_update_3() {
     'core.entity_form_mode.commerce_shipment.checkout',
     'core.entity_form_display.commerce_shipment.default.checkout',
     'core.entity_view_mode.commerce_shipment.checkout',
-    'core.entity_view_display.commerce_shipment.default.checkout'
+    'core.entity_view_display.commerce_shipment.default.checkout',
   ]);
 }

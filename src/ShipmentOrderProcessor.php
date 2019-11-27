@@ -20,23 +20,23 @@ class ShipmentOrderProcessor implements OrderProcessorInterface {
   protected $entityTypeManager;
 
   /**
-   * The packer manager.
+   * The shipping order manager.
    *
-   * @var \Drupal\commerce_shipping\PackerManagerInterface
+   * @var \Drupal\commerce_shipping\ShippingOrderManagerInterface
    */
-  protected $packerManager;
+  protected $shippingOrderManager;
 
   /**
    * Constructs a new ShipmentOrderProcessor object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
-   * @param \Drupal\commerce_shipping\PackerManagerInterface $packer_manager
-   *   The packer manager.
+   * @param \Drupal\commerce_shipping\ShippingOrderManagerInterface $shipping_order_manager
+   *   The shipping order manager.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, PackerManagerInterface $packer_manager) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, ShippingOrderManagerInterface $shipping_order_manager) {
     $this->entityTypeManager = $entity_type_manager;
-    $this->packerManager = $packer_manager;
+    $this->shippingOrderManager = $shipping_order_manager;
   }
 
   /**
@@ -58,25 +58,14 @@ class ShipmentOrderProcessor implements OrderProcessorInterface {
     }
 
     if ($this->shouldRepack($order, $shipments)) {
-      $first_shipment = reset($shipments);
-      $shipping_profile = $first_shipment->getShippingProfile();
+      $shipping_profile = $this->shippingOrderManager->getProfile($order);
       // If the shipping profile does not exist, delete all shipments.
       if (!$shipping_profile) {
-        $removed_shipments = $shipments;
-      }
-      else {
-        list($shipments, $removed_shipments) = $this->packerManager->packToShipments($order, $shipping_profile, $shipments);
-      }
-      foreach ($shipments as $shipment) {
-        if ($shipment->hasTranslationChanges()) {
-          $shipment->save();
-        }
-      }
-      // Delete any shipments that are no longer used.
-      if (!empty($removed_shipments)) {
         $shipment_storage = $this->entityTypeManager->getStorage('commerce_shipment');
-        $shipment_storage->delete($removed_shipments);
+        $shipment_storage->delete($shipments);
+        return;
       }
+      $shipments = $this->shippingOrderManager->pack($order);
       $order->set('shipments', $shipments);
     }
 
