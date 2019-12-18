@@ -318,7 +318,7 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     $second_radio_button = $page->findField('Overnight shipping: $19.99');
     $this->assertNotNull($first_radio_button);
     $this->assertNotNull($second_radio_button);
-    $this->assertTrue($first_radio_button->getAttribute('checked'));
+    $this->assertNotEmpty($first_radio_button->getAttribute('checked'));
     $page->findButton('Recalculate shipping')->click();
     $this->assertSession()->assertWaitOnAjaxRequest();
     $this->submitForm([], 'Save');
@@ -406,7 +406,7 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
       ->setShippingMethod($shipping_method)
       ->setShippingService(key($shipping_services))
       ->save();
-    $this->assertTrue($shipment->getAmount()->compareTo(new Price('9.99', 'USD')));
+    $this->assertEquals(new Price('10', 'USD'), $shipment->getAmount());
 
     // Edit the shipment.
     $this->drupalGet($this->shipmentUri);
@@ -444,7 +444,7 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     $shipment = $this->reloadEntity($shipment);
     $this->assertEquals('commerce_package_type:' . $package_type->uuid(), $shipment->getPackageType()->getId());
     $this->assertFalse($shipment->getData('owned_by_packer', TRUE));
-    $this->assertSame(0, $shipment->getAmount()->compareTo(new Price('199.80', 'USD')));
+    $this->assertEquals(new Price('199.80', 'USD'), $shipment->getAmount());
 
     $shipping_profile = $this->reloadEntity($shipping_profile);
     $this->assertEquals('customer_shipping', $shipping_profile->bundle());

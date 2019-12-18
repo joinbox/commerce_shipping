@@ -276,7 +276,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $second_radio_button = $page->findField('Overnight shipping: $19.99');
     $this->assertNotNull($first_radio_button);
     $this->assertNotNull($second_radio_button);
-    $this->assertTrue($first_radio_button->getAttribute('checked'));
+    $this->assertNotEmpty($first_radio_button->getAttribute('checked'));
 
     $this->submitForm([
       'payment_information[add_payment_method][payment_details][number]' => '4111111111111111',
@@ -457,7 +457,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $second_radio_button = $page->findField('Overnight shipping: $19.99');
     $this->assertNotNull($first_radio_button);
     $this->assertNotNull($second_radio_button);
-    $this->assertTrue($first_radio_button->getAttribute('checked'));
+    $this->assertNotEmpty($first_radio_button->getAttribute('checked'));
 
     // Complete the order information step.
     $address = [
@@ -556,7 +556,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->assertSession()->pageTextContains('Shipping method');
     $first_radio_button = $page->findField('Standard shipping: $9.99');
     $this->assertNotNull($first_radio_button);
-    $this->assertTrue($first_radio_button->getAttribute('checked'));
+    $this->assertNotEmpty($first_radio_button->getAttribute('checked'));
 
     $this->submitForm([
       'payment_information[add_payment_method][payment_details][number]' => '4111111111111111',
