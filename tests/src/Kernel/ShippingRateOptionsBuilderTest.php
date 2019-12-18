@@ -185,4 +185,24 @@ class ShippingRateOptionsBuilderTest extends ShippingKernelTestBase {
     $this->assertEquals(reset($options), $default_option);
   }
 
+  /**
+   * Tests that the shipping rate is altered.
+   */
+  public function testEvent() {
+    $options = $this->shippingRateOptionsBuilder->buildOptions($this->shipment);
+    $this->assertCount(2, $options);
+    $shipping_rate = $options['2--default']->getShippingRate();
+    $this->assertEquals(new Price('20.00', 'USD'), $shipping_rate->getAmount());
+    $shipping_rate = $options['1--default']->getShippingRate();
+    $this->assertEquals(new Price('5.00', 'USD'), $shipping_rate->getAmount());
+
+    $this->shipment->setData('alter_rate', TRUE);
+    $options = $this->shippingRateOptionsBuilder->buildOptions($this->shipment);
+    $this->assertCount(2, $options);
+    $shipping_rate = $options['2--default']->getShippingRate();
+    $this->assertEquals(new Price('40.00', 'USD'), $shipping_rate->getAmount());
+    $shipping_rate = $options['1--default']->getShippingRate();
+    $this->assertEquals(new Price('10.00', 'USD'), $shipping_rate->getAmount());
+  }
+
 }

@@ -13,4 +13,13 @@ final class ShippingEvents {
    */
   const FILTER_SHIPPING_METHODS = 'commerce_shipping.filter_shipping_methods';
 
+  /**
+   * Name of the event fired after calculating shipping rates.
+   *
+   * @Event
+   *
+   * @see \Drupal\commerce_shipping\Event\ShippingRatesEvent
+   */
+  const SHIPPING_RATES = 'commerce_shipping.rates';
+
 }

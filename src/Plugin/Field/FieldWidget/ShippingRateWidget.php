@@ -44,6 +44,13 @@ class ShippingRateWidget extends WidgetBase implements ContainerFactoryPluginInt
   protected $shippingRateOptionsBuilder;
 
   /**
+   * The event dispatcher.
+   *
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected $eventDispatcher;
+
+  /**
    * Constructs a new ShippingRateWidget object.
    *
    * @param string $plugin_id
