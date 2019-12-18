@@ -54,7 +54,8 @@ class OrderSubscriber implements EventSubscriberInterface {
   public function onPlace(WorkflowTransitionEvent $event) {
     /** @var \Drupal\commerce_order\Entity\OrderInterface $order */
     $order = $event->getEntity();
-    if ($event->getToState()->getId() != 'fulfillment' || !$this->orderHasShipments($order)) {
+    $to_state = $event->getTransition()->getToState();
+    if ($to_state->getId() != 'fulfillment' || !$this->orderHasShipments($order)) {
       return;
     }
 

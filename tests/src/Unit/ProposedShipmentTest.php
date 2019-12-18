@@ -114,7 +114,8 @@ class ProposedShipmentTest extends UnitTestCase {
    * @covers ::__construct
    */
   public function testMissingProperties() {
-    $this->setExpectedException(\InvalidArgumentException::class, 'Missing required property "items".');
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Missing required property "items".');
     $proposed_shipment = new ProposedShipment([
       'type' => 'default',
       'order_id' => 10,
@@ -127,7 +128,8 @@ class ProposedShipmentTest extends UnitTestCase {
    * @covers ::__construct
    */
   public function testInvalidItems() {
-    $this->setExpectedException(\InvalidArgumentException::class, 'Each shipment item under the "items" property must be an instance of ShipmentItem.');
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Each shipment item under the "items" property must be an instance of ShipmentItem.');
     $proposed_shipment = new ProposedShipment([
       'type' => 'default',
       'order_id' => 10,

@@ -26,7 +26,7 @@ class TrackingLinkFormatterTest extends ShippingKernelTestBase {
   protected function setUp() {
     parent::setUp();
 
-    $this->display = entity_get_display('commerce_shipment', 'default', 'default');
+    $this->display = commerce_get_entity_display('commerce_shipment', 'default', 'view');
     $this->display->setComponent('tracking_code', [
       'type' => 'commerce_tracking_link',
       'settings' => [],

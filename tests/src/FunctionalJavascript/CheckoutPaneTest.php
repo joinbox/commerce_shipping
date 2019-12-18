@@ -64,6 +64,11 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
   /**
    * {@inheritdoc}
    */
+  protected $defaultTheme = 'classy';
+
+  /**
+   * {@inheritdoc}
+   */
   protected function getAdministratorPermissions() {
     return array_merge([
       'access checkout',

@@ -4,14 +4,15 @@ namespace Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod;
 
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
 use Drupal\commerce_shipping\ShippingRate;
-use Drupal\Component\Plugin\ConfigurablePluginInterface;
+use Drupal\Component\Plugin\ConfigurableInterface;
+use Drupal\Component\Plugin\DependentPluginInterface;
 use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Core\Plugin\PluginFormInterface;
 
 /**
  * Defines the base interface for shipping methods.
  */
-interface ShippingMethodInterface extends ConfigurablePluginInterface, PluginFormInterface, PluginInspectionInterface {
+interface ShippingMethodInterface extends ConfigurableInterface, DependentPluginInterface, PluginFormInterface, PluginInspectionInterface {
 
   /**
    * Gets the shipping method label.

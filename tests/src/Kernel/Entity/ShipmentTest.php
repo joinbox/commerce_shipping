@@ -304,7 +304,8 @@ class ShipmentTest extends ShippingKernelTestBase {
       'type' => 'default',
       'title' => 'Shipment',
     ]);
-    $this->setExpectedException(EntityStorageException::class, 'Required shipment field "order_id" is empty.');
+    $this->expectException(EntityStorageException::class);
+    $this->expectExceptionMessage('Required shipment field "order_id" is empty.');
     $shipment->save();
   }
 

@@ -82,7 +82,8 @@ class ShipmentItemTest extends UnitTestCase {
    * @covers ::__construct
    */
   public function testMissingProperties() {
-    $this->setExpectedException(\InvalidArgumentException::class, 'Missing required property "declared_value".');
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Missing required property "declared_value".');
     $proposed_shipment = new ShipmentItem([
       'order_item_id' => 10,
       'title' => 'T-shirt (red, small)',

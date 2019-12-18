@@ -50,8 +50,6 @@ class ShippingMethodTest extends CommerceWebDriverTestBase {
     $this->submitForm($edit, 'Save');
     $this->assertSession()->addressEquals('admin/commerce/config/shipping-methods');
     $this->assertSession()->pageTextContains("Saved the $name shipping method.");
-    $shipping_method_count = $this->getSession()->getPage()->find('xpath', '//table/tbody/tr/td[text()="' . $name . '"]');
-    $this->assertEquals(count($shipping_method_count), 1, 'shipping method exists in the table.');
 
     $shipping_method = ShippingMethod::load(1);
     $plugin = $shipping_method->getPlugin();
