@@ -38,7 +38,7 @@ class ShippingMethodTest extends CommerceWebDriverTestBase {
     $this->assertSession()->addressEquals('admin/commerce/config/shipping-methods/add');
     $this->assertSession()->fieldExists('name[0][value]');
     $this->getSession()->getPage()->fillField('plugin[0][target_plugin_id]', 'flat_rate');
-    $this->waitForAjaxToFinish();
+    $this->assertSession()->assertWaitOnAjaxRequest();
 
     $name = $this->randomMachineName(8);
     $edit = [
