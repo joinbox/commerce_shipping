@@ -15,7 +15,6 @@ use Drupal\profile\Entity\Profile;
  * Tests the shipping rate options builder.
  *
  * @coversDefaultClass \Drupal\commerce_shipping\ShippingRateOptionsBuilder
- *
  * @group commerce_shipping
  */
 class ShippingRateOptionsBuilderTest extends ShippingKernelTestBase {

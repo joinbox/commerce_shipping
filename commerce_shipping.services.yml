@@ -53,7 +53,11 @@ services:
 
   commerce_shipping.rate_options_builder:
     class: Drupal\commerce_shipping\ShippingRateOptionsBuilder
-    arguments: ['@commerce_price.currency_formatter', '@entity_type.manager', '@event_dispatcher', '@string_translation']
+    arguments: ['@commerce_price.currency_formatter', '@commerce_shipping.shipment_manager', '@string_translation']
+
+  commerce_shipping.shipment_manager:
+    class: Drupal\commerce_shipping\ShipmentManager
+    arguments: ['@entity_type.manager', '@event_dispatcher']
 
   plugin.manager.commerce_shipping_method:
     class: Drupal\commerce_shipping\ShippingMethodManager
