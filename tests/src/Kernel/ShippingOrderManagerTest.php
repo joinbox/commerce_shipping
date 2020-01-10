@@ -140,8 +140,6 @@ class ShippingOrderManagerTest extends ShippingKernelTestBase {
    * @covers ::getProfile
    */
   public function testGetProfile() {
-    $this->assertNull($this->shippingOrderManager->getProfile($this->nonShippableOrder));
-
     $shipping_profile = Profile::create([
       'type' => 'customer',
       'address' => [
@@ -150,6 +148,7 @@ class ShippingOrderManagerTest extends ShippingKernelTestBase {
     ]);
     $shipping_profile->save();
     $shipping_profile = $this->reloadEntity($shipping_profile);
+
     $shipment = Shipment::create([
       'type' => 'default',
       'order_id' => $this->shippableOrder->id(),
@@ -170,9 +169,14 @@ class ShippingOrderManagerTest extends ShippingKernelTestBase {
       'state' => 'draft',
     ]);
     $shipment->save();
+
+    $profile = $this->shippingOrderManager->getProfile($this->nonShippableOrder);
+    $this->assertNull($profile);
+
     $this->shippableOrder->set('shipments', [$shipment]);
     $this->shippableOrder->save();
-    $this->assertEquals($shipping_profile, $this->shippingOrderManager->getProfile($this->shippableOrder));
+    $profile = $this->shippingOrderManager->getProfile($this->shippableOrder);
+    $this->assertEquals($shipping_profile->id(), $profile->id());
   }
 
   /**
@@ -201,7 +205,6 @@ class ShippingOrderManagerTest extends ShippingKernelTestBase {
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
     $shipment = $shipments[0];
     $this->assertEquals('Mug', $shipment->getItems()[0]->getTitle());
-    $this->assertFalse($shipment->isNew());
     $this->assertTrue($shipment->getData('owned_by_packer'));
     $this->assertEquals($shipping_profile, $shipment->getShippingProfile());
     $this->shippableOrder->set('shipments', $shipments);

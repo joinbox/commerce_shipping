@@ -27,18 +27,18 @@ interface ShippingOrderManagerInterface {
    *   The order.
    *
    * @return \Drupal\profile\Entity\ProfileInterface|null
-   *   The shipping profile, NULL if none found.
+   *   The shipping profile, or NULL if none found.
    */
   public function getProfile(OrderInterface $order);
 
   /**
-   * Determines if the order is shippable.
+   * Determines whether the order is shippable.
    *
    * @param \Drupal\commerce_order\Entity\OrderInterface $order
    *   The order.
    *
    * @return bool
-   *   Returns whether the order is shippable.
+   *   TRUE if the order is shippable, FALSE otherwise.
    */
   public function isShippable(OrderInterface $order);
 
@@ -50,7 +50,7 @@ interface ShippingOrderManagerInterface {
    * @param \Drupal\profile\Entity\ProfileInterface $profile
    *   The shipping profile.
    *
-   * @return array
+   * @return \Drupal\commerce_shipping\Entity\ShipmentInterface[]
    *   An array with the populated shipments, as returned by the packer manager.
    */
   public function pack(OrderInterface $order, ProfileInterface $profile = NULL);

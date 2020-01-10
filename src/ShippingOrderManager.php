@@ -54,17 +54,15 @@ class ShippingOrderManager implements ShippingOrderManagerInterface {
       'type' => 'customer',
       'uid' => 0,
     ];
-
     // Check whether the order type has another profile type ID specified.
     $order_type_id = $order->bundle();
     $order_bundle_info = $this->entityTypeBundleInfo->getBundleInfo('commerce_order');
-
     if (!empty($order_bundle_info[$order_type_id]['shipping_profile_type'])) {
       $values['type'] = $order_bundle_info[$order_type_id]['shipping_profile_type'];
     }
-
     /** @var \Drupal\profile\ProfileStorageInterface $profile_storage */
     $profile_storage = $this->entityTypeManager->getStorage('profile');
+
     return $profile_storage->create($values);
   }
 
