@@ -42,7 +42,7 @@ class FlatRate extends ShippingMethodBase {
    */
   public function defaultConfiguration() {
     return [
-      'rate_label' => NULL,
+      'rate_label' => '',
       'rate_amount' => NULL,
       'services' => ['default'],
     ] + parent::defaultConfiguration();

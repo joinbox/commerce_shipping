@@ -92,7 +92,7 @@ final class ShippingRate {
    * @return string
    *   The ID.
    */
-  public function getId() {
+  public function getId() : string {
     return $this->id;
   }
 
@@ -105,7 +105,7 @@ final class ShippingRate {
    * @return \Drupal\commerce_shipping\ShippingService
    *   The shipping service.
    */
-  public function getService() {
+  public function getService() : ShippingService {
     return $this->service;
   }
 
@@ -115,7 +115,7 @@ final class ShippingRate {
    * @return \Drupal\commerce_price\Price
    *   The amount.
    */
-  public function getAmount() {
+  public function getAmount() : Price {
     return $this->amount;
   }
 
@@ -148,7 +148,7 @@ final class ShippingRate {
    * @return array
    *   The array representation of the shipping rate.
    */
-  public function toArray() {
+  public function toArray() : array {
     return [
       'id' => $this->id,
       'service' => $this->service,

@@ -2,6 +2,8 @@
 
 namespace Drupal\commerce_shipping;
 
+use Drupal\profile\Entity\ProfileInterface;
+
 /**
  * Represents a proposed shipment.
  *
@@ -101,7 +103,7 @@ class ProposedShipment {
    * @return string
    *   The shipment type.
    */
-  public function getType() {
+  public function getType() : string {
     return $this->type;
   }
 
@@ -111,7 +113,7 @@ class ProposedShipment {
    * @return int
    *   The order ID.
    */
-  public function getOrderId() {
+  public function getOrderId() : int {
     return $this->orderId;
   }
 
@@ -121,7 +123,7 @@ class ProposedShipment {
    * @return string
    *   The shipment title.
    */
-  public function getTitle() {
+  public function getTitle() : string {
     return $this->title;
   }
 
@@ -131,17 +133,17 @@ class ProposedShipment {
    * @return \Drupal\commerce_shipping\ShipmentItem[]
    *   The shipment items.
    */
-  public function getItems() {
+  public function getItems() : array {
     return $this->items;
   }
 
   /**
    * Gets the shipping profile.
    *
-   * @return \Drupal\profile\Entity\ProfileInterface\null
-   *   The shipping profile, or NULL if unknown.
+   * @return \Drupal\profile\Entity\ProfileInterface
+   *   The shipping profile.
    */
-  public function getShippingProfile() {
+  public function getShippingProfile() : ProfileInterface {
     return $this->shippingProfile;
   }
 
@@ -164,7 +166,7 @@ class ProposedShipment {
    * @return array
    *   The custom fields, in the $field_name => $value format.
    */
-  public function getCustomFields() {
+  public function getCustomFields() : array {
     return $this->customFields;
   }
 

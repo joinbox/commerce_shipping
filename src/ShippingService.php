@@ -5,7 +5,7 @@ namespace Drupal\commerce_shipping;
 /**
  * Represents a shipping service.
  */
-class ShippingService {
+final class ShippingService {
 
   /**
    * The shipping service ID.
@@ -40,7 +40,7 @@ class ShippingService {
    * @return string
    *   The shipping service ID.
    */
-  public function getId() {
+  public function getId() : string {
     return $this->id;
   }
 
@@ -50,7 +50,7 @@ class ShippingService {
    * @return string
    *   The shipping service label.
    */
-  public function getLabel() {
+  public function getLabel() : string {
     return $this->label;
   }
 

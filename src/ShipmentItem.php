@@ -2,6 +2,9 @@
 
 namespace Drupal\commerce_shipping;
 
+use Drupal\commerce_price\Price;
+use Drupal\physical\Weight;
+
 /**
  * Represents a shipment item.
  */
@@ -10,7 +13,7 @@ final class ShipmentItem {
   /**
    * The source order item ID.
    *
-   * @var string
+   * @var int
    */
   protected $orderItemId;
 
@@ -24,7 +27,7 @@ final class ShipmentItem {
   /**
    * The quantity.
    *
-   * @var float
+   * @var string
    */
   protected $quantity;
 
@@ -78,10 +81,10 @@ final class ShipmentItem {
    * Note that an order item might correspond to multiple shipment items,
    * depending on the used packer.
    *
-   * @return string
+   * @return int
    *   The order item ID.
    */
-  public function getOrderItemId() {
+  public function getOrderItemId() : int {
     return $this->orderItemId;
   }
 
@@ -93,17 +96,17 @@ final class ShipmentItem {
    * @return string
    *   The title.
    */
-  public function getTitle() {
+  public function getTitle() : string {
     return $this->title;
   }
 
   /**
    * Gets the quantity.
    *
-   * @return float
+   * @return string
    *   The quantity.
    */
-  public function getQuantity() {
+  public function getQuantity() : string {
     return $this->quantity;
   }
 
@@ -115,7 +118,7 @@ final class ShipmentItem {
    * @return \Drupal\physical\Weight
    *   The weight.
    */
-  public function getWeight() {
+  public function getWeight() : Weight {
     return $this->weight;
   }
 
@@ -128,7 +131,7 @@ final class ShipmentItem {
    * @return \Drupal\commerce_price\Price
    *   The declared value.
    */
-  public function getDeclaredValue() {
+  public function getDeclaredValue() : Price {
     return $this->declaredValue;
   }
 
