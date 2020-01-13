@@ -4,6 +4,7 @@ namespace Drupal\commerce_shipping\Entity;
 
 use Drupal\commerce\ConditionGroup;
 use Drupal\commerce\Plugin\Commerce\Condition\ConditionInterface;
+use Drupal\commerce\Plugin\Commerce\Condition\ParentEntityAwareInterface;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
@@ -122,7 +123,11 @@ class ShippingMethod extends ContentEntityBase implements ShippingMethodInterfac
     $conditions = [];
     foreach ($this->get('conditions') as $field_item) {
       /** @var \Drupal\commerce\Plugin\Field\FieldType\PluginItemInterface $field_item */
-      $conditions[] = $field_item->getTargetInstance();
+      $condition = $field_item->getTargetInstance();
+      if ($condition instanceof ParentEntityAwareInterface) {
+        $condition->setParentEntity($this);
+      }
+      $conditions[] = $condition;
     }
     return $conditions;
   }
