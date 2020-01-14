@@ -12,7 +12,7 @@ use Drupal\Core\Plugin\PluginFormInterface;
 /**
  * Defines the base interface for shipping methods.
  */
-interface ShippingMethodInterface extends ConfigurableInterface, DependentPluginInterface, PluginFormInterface, PluginInspectionInterface {
+interface ShippingMethodInterface extends ConfigurableInterface, DependentPluginInterface, PluginFormInterface, PluginInspectionInterface, ParentEntityAwareInterface {
 
   /**
    * Gets the shipping method label.

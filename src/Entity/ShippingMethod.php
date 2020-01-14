@@ -98,7 +98,13 @@ class ShippingMethod extends ContentEntityBase implements ShippingMethodInterfac
    * {@inheritdoc}
    */
   public function getPlugin() {
-    return $this->get('plugin')->first()->getTargetInstance();
+    /** @var \Drupal\commerce\Plugin\Field\FieldType\PluginItemInterface $field_item */
+    $field_item = $this->get('plugin')->first();
+    /** @var \Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterface $plugin */
+    $plugin = $field_item->getTargetInstance();
+    $plugin->setParentEntity($this);
+
+    return $plugin;
   }
 
   /**

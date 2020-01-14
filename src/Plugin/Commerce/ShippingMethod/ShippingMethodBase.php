@@ -7,6 +7,7 @@ use Drupal\commerce_shipping\PackageTypeManagerInterface;
 use Drupal\commerce_shipping\ShippingRate;
 use Drupal\commerce_shipping\ShippingService;
 use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\PluginBase;
@@ -30,6 +31,15 @@ abstract class ShippingMethodBase extends PluginBase implements ContainerFactory
    * @var \Drupal\commerce_shipping\ShippingService[]
    */
   protected $services = [];
+
+  /**
+   * The parent config entity.
+   *
+   * Not available while the plugin is being configured.
+   *
+   * @var \Drupal\commerce_shipping\Entity\ShippingMethodInterface
+   */
+  protected $parentEntity;
 
   /**
    * Constructs a new ShippingMethodBase object.
@@ -63,6 +73,13 @@ abstract class ShippingMethodBase extends PluginBase implements ContainerFactory
       $plugin_definition,
       $container->get('plugin.manager.commerce_package_type')
     );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setParentEntity(EntityInterface $parent_entity) {
+    $this->parentEntity = $parent_entity;
   }
 
   /**
@@ -218,6 +235,7 @@ abstract class ShippingMethodBase extends PluginBase implements ContainerFactory
   public function selectRate(ShipmentInterface $shipment, ShippingRate $rate) {
     // Plugins can override this method to store additional information
     // on the shipment when the rate is selected (for example, the rate ID).
+    $shipment->setShippingMethodId($this->parentEntity->id());
     $shipment->setShippingService($rate->getService()->getId());
     $shipment->setAmount($rate->getAmount());
   }

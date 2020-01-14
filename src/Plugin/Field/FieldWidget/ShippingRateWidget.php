@@ -135,9 +135,6 @@ class ShippingRateWidget extends WidgetBase implements ContainerFactoryPluginInt
       $shipping_rate = $element[$selected_value]['#shipping_rate'];
       /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
       $shipment = $items[0]->getEntity();
-      // @todo This should be done by selectRate() but the plugin doesn't
-      // have access to the parent entity ID yet.
-      $shipment->setShippingMethodId($shipping_method_id);
 
       $shipping_method_storage = $this->entityTypeManager->getStorage('commerce_shipping_method');
       /** @var \Drupal\commerce_shipping\Entity\ShippingMethodInterface $shipping_method */
