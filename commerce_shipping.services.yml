@@ -57,7 +57,11 @@ services:
 
   commerce_shipping.shipment_manager:
     class: Drupal\commerce_shipping\ShipmentManager
-    arguments: ['@entity_type.manager', '@event_dispatcher']
+    arguments: ['@entity_type.manager', '@event_dispatcher', '@logger.channel.commerce_shipping']
+
+  logger.channel.commerce_shipping:
+    parent: logger.channel_base
+    arguments: ['commerce_shipping']
 
   plugin.manager.commerce_shipping_method:
     class: Drupal\commerce_shipping\ShippingMethodManager

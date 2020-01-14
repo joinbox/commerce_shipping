@@ -73,6 +73,17 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     ]);
     $shipping_method->save();
 
+    $bad_shipping_method = ShippingMethod::create([
+      'stores' => $this->store->id(),
+      'name' => $this->randomString(),
+      'status' => TRUE,
+      'plugin' => [
+        'target_plugin_id' => 'exception_thrower',
+        'target_plugin_configuration' => [],
+      ],
+    ]);
+    $bad_shipping_method->save();
+
     $another_shipping_method = ShippingMethod::create([
       'stores' => $this->store->id(),
       'name' => 'Another shipping method',

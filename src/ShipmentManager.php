@@ -6,6 +6,7 @@ use Drupal\commerce_shipping\Entity\ShipmentInterface;
 use Drupal\commerce_shipping\Event\ShippingEvents;
 use Drupal\commerce_shipping\Event\ShippingRatesEvent;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ShipmentManager implements ShipmentManagerInterface {
@@ -25,16 +26,26 @@ class ShipmentManager implements ShipmentManagerInterface {
   protected $eventDispatcher;
 
   /**
+   * The logger.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
+
+  /**
    * Constructs a new ShipmentManager object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   The logger.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, EventDispatcherInterface $event_dispatcher) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, EventDispatcherInterface $event_dispatcher, LoggerInterface $logger) {
     $this->entityTypeManager = $entity_type_manager;
     $this->eventDispatcher = $event_dispatcher;
+    $this->logger = $logger;
   }
 
   /**
@@ -47,7 +58,16 @@ class ShipmentManager implements ShipmentManagerInterface {
     $shipping_methods = $shipping_method_storage->loadMultipleForShipment($shipment);
     foreach ($shipping_methods as $shipping_method) {
       $shipping_method_plugin = $shipping_method->getPlugin();
-      $shipping_rates = $shipping_method_plugin->calculateRates($shipment);
+      try {
+        $shipping_rates = $shipping_method_plugin->calculateRates($shipment);
+      }
+      catch (\Exception $exception) {
+        $this->logger->error('Exception occurred when calculating rates for @name: @message', [
+          '@name' => $shipping_method->getName(),
+          '@message' => $exception->getMessage(),
+        ]);
+        continue;
+      }
       // Allow the rates to be altered via code.
       $event = new ShippingRatesEvent($shipping_rates, $shipping_method, $shipment);
       $this->eventDispatcher->dispatch(ShippingEvents::SHIPPING_RATES, $event);
