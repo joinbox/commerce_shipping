@@ -130,12 +130,45 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
    */
   public function testCalculateRates() {
     $rates = $this->shipmentManager->calculateRates($this->shipment);
-    $this->assertNotEmpty($rates);
-    $rates = array_values($rates);
     $this->assertCount(2, $rates);
-    list($first_shipping_rate, $second_shipping_rate) = $rates;
+    $first_shipping_rate = reset($rates);
+    $second_shipping_rate = end($rates);
+
+    $this->assertEquals('default', $first_shipping_rate->getService()->getId());
     $this->assertEquals(new Price('20.00', 'USD'), $first_shipping_rate->getAmount());
+
+    $this->assertEquals('default', $second_shipping_rate->getService()->getId());
     $this->assertEquals(new Price('5.00', 'USD'), $second_shipping_rate->getAmount());
+  }
+
+  /**
+   * Tests the altering of shipping rates.
+   *
+   * @covers ::calculateRates
+   */
+  public function testEvent() {
+    $rates = $this->shipmentManager->calculateRates($this->shipment);
+    $this->assertCount(2, $rates);
+    $first_shipping_rate = reset($rates);
+    $second_shipping_rate = end($rates);
+
+    $this->assertEquals('default', $first_shipping_rate->getService()->getId());
+    $this->assertEquals(new Price('20.00', 'USD'), $first_shipping_rate->getAmount());
+
+    $this->assertEquals('default', $second_shipping_rate->getService()->getId());
+    $this->assertEquals(new Price('5.00', 'USD'), $second_shipping_rate->getAmount());
+
+    $this->shipment->setData('alter_rate', TRUE);
+    $rates = $this->shipmentManager->calculateRates($this->shipment);
+    $this->assertCount(2, $rates);
+    $first_shipping_rate = reset($rates);
+    $second_shipping_rate = end($rates);
+
+    $this->assertEquals('default', $first_shipping_rate->getService()->getId());
+    $this->assertEquals(new Price('40.00', 'USD'), $first_shipping_rate->getAmount());
+
+    $this->assertEquals('default', $second_shipping_rate->getService()->getId());
+    $this->assertEquals(new Price('10.00', 'USD'), $second_shipping_rate->getAmount());
   }
 
 }
