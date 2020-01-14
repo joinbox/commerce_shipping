@@ -144,7 +144,7 @@ abstract class ShippingMethodBase extends PluginBase implements ContainerFactory
       $this->configuration['services'] = array_combine($service_ids, $service_ids);
     }
     $workflows = \Drupal::service('plugin.manager.workflow')->getGroupedLabels('commerce_shipment');
-    $workflows = $workflows['Shipment'];
+    $workflows = reset($workflows);
 
     $form['default_package_type'] = [
       '#type' => 'select',
