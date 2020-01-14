@@ -52,14 +52,14 @@ class ShipmentManager implements ShipmentManagerInterface {
    * {@inheritdoc}
    */
   public function calculateRates(ShipmentInterface $shipment) {
-    $rates = [];
+    $all_rates = [];
     /** @var \Drupal\commerce_shipping\ShippingMethodStorageInterface $shipping_method_storage */
     $shipping_method_storage = $this->entityTypeManager->getStorage('commerce_shipping_method');
     $shipping_methods = $shipping_method_storage->loadMultipleForShipment($shipment);
     foreach ($shipping_methods as $shipping_method) {
       $shipping_method_plugin = $shipping_method->getPlugin();
       try {
-        $shipping_rates = $shipping_method_plugin->calculateRates($shipment);
+        $rates = $shipping_method_plugin->calculateRates($shipment);
       }
       catch (\Exception $exception) {
         $this->logger->error('Exception occurred when calculating rates for @name: @message', [
@@ -69,18 +69,18 @@ class ShipmentManager implements ShipmentManagerInterface {
         continue;
       }
       // Allow the rates to be altered via code.
-      $event = new ShippingRatesEvent($shipping_rates, $shipping_method, $shipment);
+      $event = new ShippingRatesEvent($rates, $shipping_method, $shipment);
       $this->eventDispatcher->dispatch(ShippingEvents::SHIPPING_RATES, $event);
-      $shipping_rates = $event->getRates();
+      $rates = $event->getRates();
 
-      foreach ($shipping_rates as $shipping_rate) {
-        $service = $shipping_rate->getService();
+      foreach ($rates as $rate) {
+        $service = $rate->getService();
         $rate_id = $shipping_method->id() . '--' . $service->getId();
-        $rates[$rate_id] = $shipping_rate;
+        $all_rates[$rate_id] = $rate;
       }
     }
 
-    return $rates;
+    return $all_rates;
   }
 
 }

@@ -131,14 +131,14 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
   public function testCalculateRates() {
     $rates = $this->shipmentManager->calculateRates($this->shipment);
     $this->assertCount(2, $rates);
-    $first_shipping_rate = reset($rates);
-    $second_shipping_rate = end($rates);
+    $first_rate = reset($rates);
+    $second_rate = end($rates);
 
-    $this->assertEquals('default', $first_shipping_rate->getService()->getId());
-    $this->assertEquals(new Price('20.00', 'USD'), $first_shipping_rate->getAmount());
+    $this->assertEquals('default', $first_rate->getService()->getId());
+    $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getAmount());
 
-    $this->assertEquals('default', $second_shipping_rate->getService()->getId());
-    $this->assertEquals(new Price('5.00', 'USD'), $second_shipping_rate->getAmount());
+    $this->assertEquals('default', $second_rate->getService()->getId());
+    $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getAmount());
   }
 
   /**
@@ -149,26 +149,26 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
   public function testEvent() {
     $rates = $this->shipmentManager->calculateRates($this->shipment);
     $this->assertCount(2, $rates);
-    $first_shipping_rate = reset($rates);
-    $second_shipping_rate = end($rates);
+    $first_rate = reset($rates);
+    $second_rate = end($rates);
 
-    $this->assertEquals('default', $first_shipping_rate->getService()->getId());
-    $this->assertEquals(new Price('20.00', 'USD'), $first_shipping_rate->getAmount());
+    $this->assertEquals('default', $first_rate->getService()->getId());
+    $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getAmount());
 
-    $this->assertEquals('default', $second_shipping_rate->getService()->getId());
-    $this->assertEquals(new Price('5.00', 'USD'), $second_shipping_rate->getAmount());
+    $this->assertEquals('default', $second_rate->getService()->getId());
+    $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getAmount());
 
     $this->shipment->setData('alter_rate', TRUE);
     $rates = $this->shipmentManager->calculateRates($this->shipment);
     $this->assertCount(2, $rates);
-    $first_shipping_rate = reset($rates);
-    $second_shipping_rate = end($rates);
+    $first_rate = reset($rates);
+    $second_rate = end($rates);
 
-    $this->assertEquals('default', $first_shipping_rate->getService()->getId());
-    $this->assertEquals(new Price('40.00', 'USD'), $first_shipping_rate->getAmount());
+    $this->assertEquals('default', $first_rate->getService()->getId());
+    $this->assertEquals(new Price('40.00', 'USD'), $first_rate->getAmount());
 
-    $this->assertEquals('default', $second_shipping_rate->getService()->getId());
-    $this->assertEquals(new Price('10.00', 'USD'), $second_shipping_rate->getAmount());
+    $this->assertEquals('default', $second_rate->getService()->getId());
+    $this->assertEquals(new Price('10.00', 'USD'), $second_rate->getAmount());
   }
 
 }
