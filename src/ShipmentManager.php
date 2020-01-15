@@ -74,13 +74,37 @@ class ShipmentManager implements ShipmentManagerInterface {
       $rates = $event->getRates();
 
       foreach ($rates as $rate) {
-        $service = $rate->getService();
-        $rate_id = $shipping_method->id() . '--' . $service->getId();
-        $all_rates[$rate_id] = $rate;
+        // Replace the rate ID with a constructed one which contains the
+        // shipping method ID. Use it to key the return array.
+        $new_rate_values = [
+          'id' => $shipping_method->id() . '--' . $rate->getService()->getId(),
+        ] + $rate->toArray();
+        $rate = ShippingRate::fromArray($new_rate_values);
+
+        $all_rates[$rate->getId()] = $rate;
       }
     }
 
     return $all_rates;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function selectDefaultRate(ShipmentInterface $shipment, array $rates) {
+    /** @var \Drupal\commerce_shipping\ShippingRate[] $rates */
+    $default_rate = reset($rates);
+    if ($shipment->getShippingMethodId() && $shipment->getShippingService()) {
+      $rate_id = $shipment->getShippingMethodId() . '--' . $shipment->getShippingService();
+      foreach ($rates as $rate) {
+        if ($rate_id == $rate->getId()) {
+          $default_rate = $rate;
+          break;
+        }
+      }
+    }
+
+    return $default_rate;
   }
 
 }

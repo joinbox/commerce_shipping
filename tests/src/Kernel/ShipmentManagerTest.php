@@ -134,9 +134,11 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     $first_rate = reset($rates);
     $second_rate = end($rates);
 
+    $this->assertArrayHasKey($first_rate->getId(), $rates);
     $this->assertEquals('default', $first_rate->getService()->getId());
     $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getAmount());
 
+    $this->assertArrayHasKey($second_rate->getId(), $rates);
     $this->assertEquals('default', $second_rate->getService()->getId());
     $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getAmount());
   }
@@ -152,9 +154,11 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     $first_rate = reset($rates);
     $second_rate = end($rates);
 
+    $this->assertArrayHasKey($first_rate->getId(), $rates);
     $this->assertEquals('default', $first_rate->getService()->getId());
     $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getAmount());
 
+    $this->assertArrayHasKey($second_rate->getId(), $rates);
     $this->assertEquals('default', $second_rate->getService()->getId());
     $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getAmount());
 
@@ -164,11 +168,31 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     $first_rate = reset($rates);
     $second_rate = end($rates);
 
+    $this->assertArrayHasKey($first_rate->getId(), $rates);
     $this->assertEquals('default', $first_rate->getService()->getId());
     $this->assertEquals(new Price('40.00', 'USD'), $first_rate->getAmount());
 
+    $this->assertArrayHasKey($second_rate->getId(), $rates);
     $this->assertEquals('default', $second_rate->getService()->getId());
     $this->assertEquals(new Price('10.00', 'USD'), $second_rate->getAmount());
+  }
+
+  /**
+   * Tests selecting the default rate.
+   *
+   * @covers ::selectDefaultRate
+   */
+  public function testSelectDefaultRate() {
+    $rates = $this->shipmentManager->calculateRates($this->shipment);
+    // The selected rate should be the first one (as a fallback).
+    $default_rate = $this->shipmentManager->selectDefaultRate($this->shipment, $rates);
+    $this->assertEquals('3--default', $default_rate->getId());
+
+    // The selected rate should match the specified shipping method/service.
+    $this->shipment->setShippingMethodId('1');
+    $this->shipment->setShippingService('default');
+    $default_rate = $this->shipmentManager->selectDefaultRate($this->shipment, $rates);
+    $this->assertEquals('1--default', $default_rate->getId());
   }
 
 }

@@ -51,10 +51,6 @@ services:
     tags:
       - { name: event_subscriber }
 
-  commerce_shipping.rate_options_builder:
-    class: Drupal\commerce_shipping\ShippingRateOptionsBuilder
-    arguments: ['@commerce_price.currency_formatter', '@commerce_shipping.shipment_manager', '@string_translation']
-
   commerce_shipping.shipment_manager:
     class: Drupal\commerce_shipping\ShipmentManager
     arguments: ['@entity_type.manager', '@event_dispatcher', '@logger.channel.commerce_shipping']
