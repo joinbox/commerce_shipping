@@ -58,3 +58,18 @@ function commerce_shipping_update_8201() {
     ->setDefaultValue('AND');
   $entity_definition_update->installFieldStorageDefinition('condition_operator', 'commerce_shipping_method', 'commerce_shipping', $storage_definition);
 }
+
+/**
+ * Add the 'adjustments' field to shipments.
+ */
+function commerce_shipping_update_8202() {
+  $entity_definition_update = \Drupal::entityDefinitionUpdateManager();
+
+  $storage_definition = BaseFieldDefinition::create('commerce_adjustment')
+    ->setLabel(t('Adjustments'))
+    ->setTargetEntityTypeId('commerce_shipment')
+    ->setCardinality(BaseFieldDefinition::CARDINALITY_UNLIMITED)
+    ->setDisplayConfigurable('form', FALSE)
+    ->setDisplayConfigurable('view', FALSE);
+  $entity_definition_update->installFieldStorageDefinition('adjustments', 'commerce_shipment', 'commerce_shipping', $storage_definition);
+}

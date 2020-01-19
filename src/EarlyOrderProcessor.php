@@ -2,15 +2,22 @@
 
 namespace Drupal\commerce_shipping;
 
-use Drupal\commerce_order\Adjustment;
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_order\OrderProcessorInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
- * Processes the order's shipments.
+ * Prepares shipments for the order refresh process.
+ *
+ * Runs before other order processors (promotion, tax, etc).
+ * Packs the shipments and resets their adjustments.
+ *
+ * Once the other order processors perform their changes, the
+ * LateOrderProcessor transfers the shipment adjustments to the order.
+ *
+ * @see \Drupal\commerce_shipping\LateOrderProcessor
  */
-class ShipmentOrderProcessor implements OrderProcessorInterface {
+class EarlyOrderProcessor implements OrderProcessorInterface {
 
   /**
    * The entity type manager.
@@ -27,7 +34,7 @@ class ShipmentOrderProcessor implements OrderProcessorInterface {
   protected $shippingOrderManager;
 
   /**
-   * Constructs a new ShipmentOrderProcessor object.
+   * Constructs a new LateOrderProcessor object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
@@ -46,18 +53,9 @@ class ShipmentOrderProcessor implements OrderProcessorInterface {
     if (!$order->hasField('shipments') || $order->get('shipments')->isEmpty()) {
       return;
     }
-
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */
     $shipments = $order->get('shipments')->referencedEntities();
-    if (!$shipments) {
-      // The referencedEntities() method may return an empty array even if the
-      // entity reference field is not empty if the referenced entity does not
-      // exist.
-      // @see https://www.drupal.org/project/drupal/issues/2820574
-      return;
-    }
-
-    if ($this->shouldRepack($order, $shipments)) {
+    if ($shipments && $this->shouldRepack($order, $shipments)) {
       $shipping_profile = $this->shippingOrderManager->getProfile($order);
       // If the shipping profile does not exist, delete all shipments.
       if (!$shipping_profile) {
@@ -65,22 +63,13 @@ class ShipmentOrderProcessor implements OrderProcessorInterface {
         $shipment_storage->delete($shipments);
         return;
       }
-      $shipments = $this->shippingOrderManager->pack($order);
-      $order->set('shipments', $shipments);
+      $shipments = $this->shippingOrderManager->pack($order, $shipping_profile);
     }
 
-    $single_shipment = count($shipments) === 1;
     foreach ($shipments as $shipment) {
-      // Shipments without an amount are incomplete / unrated.
-      if ($amount = $shipment->getAmount()) {
-        $order->addAdjustment(new Adjustment([
-          'type' => 'shipping',
-          'label' => $single_shipment ? t('Shipping') : $shipment->getTitle(),
-          'amount' => $amount,
-          'source_id' => $shipment->id(),
-        ]));
-      }
+      $shipment->clearAdjustments();
     }
+    $order->set('shipments', $shipments);
   }
 
   /**
@@ -109,8 +98,8 @@ class ShipmentOrderProcessor implements OrderProcessorInterface {
     // optimization, this processor ignores refreshes caused by moving
     // through checkout, unless an order item was added/removed along the way.
     if (isset($order->original) && $order->hasField('checkout_step')) {
-      $previous_step = $order->original->checkout_step->value;
-      $current_step = $order->checkout_step->value;
+      $previous_step = $order->original->get('checkout_step')->value;
+      $current_step = $order->get('checkout_step')->value;
       $previous_order_item_ids = array_map(function ($value) {
         return $value['target_id'];
       }, $order->original->get('order_items')->getValue());

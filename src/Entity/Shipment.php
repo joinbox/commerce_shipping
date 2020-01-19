@@ -6,6 +6,7 @@ use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_shipping\Plugin\Commerce\PackageType\PackageTypeInterface as PackageTypePluginInterface;
 use Drupal\commerce_shipping\ProposedShipment;
 use Drupal\commerce_shipping\ShipmentItem;
+use Drupal\commerce_order\Adjustment;
 use Drupal\commerce_price\Price;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
@@ -303,6 +304,81 @@ class Shipment extends ContentEntityBase implements ShipmentInterface {
   /**
    * {@inheritdoc}
    */
+  public function getAdjustedAmount(array $adjustment_types = []) {
+    $amount = $this->getAmount();
+    if (!$amount) {
+      return NULL;
+    }
+    foreach ($this->getAdjustments($adjustment_types) as $adjustment) {
+      if (!$adjustment->isIncluded()) {
+        $amount = $amount->add($adjustment->getAmount());
+      }
+    }
+    $rounder = \Drupal::service('commerce_price.rounder');
+    $amount = $rounder->round($amount);
+
+    return $amount;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getAdjustments(array $adjustment_types = []) {
+    /** @var \Drupal\commerce_order\Adjustment[] $adjustments */
+    $adjustments = $this->get('adjustments')->getAdjustments();
+    // Filter adjustments by type, if needed.
+    if ($adjustment_types) {
+      foreach ($adjustments as $index => $adjustment) {
+        if (!in_array($adjustment->getType(), $adjustment_types)) {
+          unset($adjustments[$index]);
+        }
+      }
+      $adjustments = array_values($adjustments);
+    }
+
+    return $adjustments;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setAdjustments(array $adjustments) {
+    $this->set('adjustments', $adjustments);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function addAdjustment(Adjustment $adjustment) {
+    $this->get('adjustments')->appendItem($adjustment);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function removeAdjustment(Adjustment $adjustment) {
+    $this->get('adjustments')->removeAdjustment($adjustment);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function clearAdjustments() {
+    $locked_callback = function ($adjustment) {
+      /** @var \Drupal\commerce_order\Adjustment $adjustment */
+      return $adjustment->isLocked();
+    };
+    $adjustments = array_filter($this->getAdjustments(), $locked_callback);
+    $this->setAdjustments($adjustments);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getTrackingCode() {
     return $this->get('tracking_code')->value;
   }
@@ -543,9 +619,14 @@ class Shipment extends ContentEntityBase implements ShipmentInterface {
     $fields['amount'] = BaseFieldDefinition::create('commerce_price')
       ->setLabel(t('Amount'))
       ->setDescription(t('The shipment amount.'))
-      ->setReadOnly(TRUE)
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', TRUE);
+
+    $fields['adjustments'] = BaseFieldDefinition::create('commerce_adjustment')
+      ->setLabel(t('Adjustments'))
+      ->setCardinality(BaseFieldDefinition::CARDINALITY_UNLIMITED)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE);
 
     $fields['tracking_code'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Tracking code'))

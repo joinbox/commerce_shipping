@@ -3,8 +3,8 @@
 namespace Drupal\Tests\commerce_shipping\Kernel\Entity;
 
 use Drupal\commerce_order\Adjustment;
-use Drupal\commerce_price\Price;
 use Drupal\commerce_order\Entity\Order;
+use Drupal\commerce_price\Price;
 use Drupal\commerce_shipping\Entity\Shipment;
 use Drupal\commerce_shipping\Entity\ShipmentType;
 use Drupal\commerce_shipping\Entity\ShippingMethod;
@@ -49,6 +49,11 @@ class ShipmentTest extends ShippingKernelTestBase {
    * @covers ::setWeight
    * @covers ::getAmount
    * @covers ::setAmount
+   * @covers ::getAdjustments
+   * @covers ::setAdjustments
+   * @covers ::addAdjustment
+   * @covers ::removeAdjustment
+   * @covers ::getAdjustedAmount
    * @covers ::getTrackingCode
    * @covers ::setTrackingCode
    * @covers ::getState
@@ -155,6 +160,28 @@ class ShipmentTest extends ShippingKernelTestBase {
     $amount = new Price('10.00', 'USD');
     $shipment->setAmount($amount);
     $this->assertEquals($amount, $shipment->getAmount());
+
+    $adjustments = [];
+    $adjustments[] = new Adjustment([
+      'type' => 'custom',
+      'label' => '10% off',
+      'amount' => new Price('-1.00', 'USD'),
+    ]);
+    $adjustments[] = new Adjustment([
+      'type' => 'fee',
+      'label' => 'Random fee',
+      'amount' => new Price('2.00', 'USD'),
+    ]);
+    $shipment->addAdjustment($adjustments[0]);
+    $shipment->addAdjustment($adjustments[1]);
+    $this->assertEquals($adjustments, $shipment->getAdjustments());
+    $shipment->removeAdjustment($adjustments[0]);
+    $this->assertEquals([$adjustments[1]], $shipment->getAdjustments());
+    $shipment->setAdjustments($adjustments);
+    $this->assertEquals($adjustments, $shipment->getAdjustments());
+    $this->assertEquals(new Price('11.00', 'USD'), $shipment->getAdjustedAmount());
+    $this->assertEquals(new Price('9.00', 'USD'), $shipment->getAdjustedAmount(['custom']));
+    $this->assertEquals(new Price('12.00', 'USD'), $shipment->getAdjustedAmount(['fee']));
 
     $tracking_code = $this->randomString();
     $shipment->setTrackingCode($tracking_code);

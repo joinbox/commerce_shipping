@@ -43,15 +43,15 @@ interface ShippingOrderManagerInterface {
   public function isShippable(OrderInterface $order);
 
   /**
-   * Packs the given order and return saved shipments.
+   * Packs the given order into shipments.
    *
    * @param \Drupal\commerce_order\Entity\OrderInterface $order
    *   The order.
    * @param \Drupal\profile\Entity\ProfileInterface $profile
    *   The shipping profile.
    *
-   * @return \Drupal\commerce_shipping\Entity\ShipmentInterface[]
-   *   An array with the populated shipments, as returned by the packer manager.
+   * @return \Drupal\commerce_shipping\\Entity\ShipmentInterface[]
+   *   The unsaved shipments.
    */
   public function pack(OrderInterface $order, ProfileInterface $profile = NULL);
 

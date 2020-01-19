@@ -21,11 +21,16 @@ services:
     class: Drupal\commerce_shipping\OrderShipmentSummary
     arguments: ['@entity_type.manager']
 
-  commerce_shipping.shipment_order_processor:
-    class: Drupal\commerce_shipping\ShipmentOrderProcessor
+  commerce_shipping.early_order_processor:
+    class: Drupal\commerce_shipping\EarlyOrderProcessor
     arguments: ['@entity_type.manager', '@commerce_shipping.order_manager']
     tags:
       - { name: commerce_order.order_processor, priority: 200 }
+
+  commerce_shipping.late_order_processor:
+    class: Drupal\commerce_shipping\LateOrderProcessor
+    tags:
+      - { name: commerce_order.order_processor, priority: -100 }
 
   commerce_shipping.referenceable_plugin_types_subscriber:
     class: Drupal\commerce_shipping\EventSubscriber\ReferenceablePluginTypesSubscriber

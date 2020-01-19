@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\commerce_shipping\Kernel;
 
+use Drupal\commerce_order\Adjustment;
 use Drupal\commerce_product\Entity\ProductVariation;
 use Drupal\commerce_order\Entity\Order;
 use Drupal\commerce_order\Entity\OrderItem;
@@ -10,12 +11,12 @@ use Drupal\physical\Weight;
 use Drupal\profile\Entity\Profile;
 
 /**
- * Tests the shipment order processor.
+ * Tests the early order processor.
  *
- * @coversDefaultClass \Drupal\commerce_shipping\ShipmentOrderProcessor
+ * @coversDefaultClass \Drupal\commerce_shipping\EarlyOrderProcessor
  * @group commerce_shipping
  */
-class ShipmentOrderProcessorTest extends ShippingKernelTestBase {
+class EarlyOrderProcessorTest extends ShippingKernelTestBase {
 
   /**
    * The sample product variations.
@@ -32,9 +33,16 @@ class ShipmentOrderProcessorTest extends ShippingKernelTestBase {
   protected $order;
 
   /**
+   * A sample shipping profile.
+   *
+   * @var \Drupal\profile\Entity\ProfileInterface
+   */
+  protected $shippingProfile;
+
+  /**
    * The order refresh processor.
    *
-   * @var \Drupal\commerce_shipping\ShipmentOrderProcessor
+   * @var \Drupal\commerce_shipping\LateOrderProcessor
    */
   protected $processor;
 
@@ -51,8 +59,7 @@ class ShipmentOrderProcessorTest extends ShippingKernelTestBase {
   protected function setUp() {
     parent::setUp();
 
-    $this->processor = $this->container->get('commerce_shipping.shipment_order_processor');
-    $shipping_order_manager = $this->container->get('commerce_shipping.order_manager');
+    $this->processor = $this->container->get('commerce_shipping.early_order_processor');
 
     $this->variations[] = ProductVariation::create([
       'type' => 'default',
@@ -97,12 +104,23 @@ class ShipmentOrderProcessorTest extends ShippingKernelTestBase {
     $shipping_profile->save();
 
     // Create the first shipment.
+    $shipping_order_manager = $this->container->get('commerce_shipping.order_manager');
     $shipments = $shipping_order_manager->pack($order, $shipping_profile);
-    $order->set('shipments', $shipments);
+    /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
+    $shipment = reset($shipments);
+    $shipment->setAmount(new Price('6', 'USD'));
+    $shipment->addAdjustment(new Adjustment([
+      'type' => 'fee',
+      'label' => 'Handling fee',
+      'amount' => new Price('2.00', 'USD'),
+    ]));
+    $shipment->save();
+
+    $order->set('shipments', [$shipment]);
     $order->setRefreshState(Order::REFRESH_SKIP);
     $order->save();
     $this->order = $order;
-    $this->shipping_profile = $shipping_profile;
+    $this->shippingProfile = $shipping_profile;
   }
 
   /**
@@ -110,7 +128,9 @@ class ShipmentOrderProcessorTest extends ShippingKernelTestBase {
    * @covers ::shouldRepack
    */
   public function testProcess() {
-    $this->assertCount(1, $this->order->get('shipments')->referencedEntities());
+    /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */
+    $shipments = $this->order->get('shipments')->referencedEntities();
+    $this->assertCount(1, $shipments);
 
     // Repack on adding an order item.
     $second_order_item = OrderItem::create([
@@ -123,13 +143,25 @@ class ShipmentOrderProcessorTest extends ShippingKernelTestBase {
     $second_order_item->save();
     $this->order->addItem($second_order_item);
     $this->processor->process($this->order);
-    $this->assertCount(2, $this->order->get('shipments')->referencedEntities());
+    $shipments = $this->order->get('shipments')->referencedEntities();
+
+    // Confirm that an additional shipment was created, and that
+    // no adjustments are present.
+    $this->assertCount(2, $shipments);
+    /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $first_shipment */
+    $first_shipment = reset($shipments);
+    $this->assertEquals(new Price('6', 'USD'), $first_shipment->getAmount());
+    $this->assertEmpty($first_shipment->getAdjustments());
+    /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $second_shipment */
+    $second_shipment = end($shipments);
+    $this->assertNull($second_shipment->getAmount());
+    $this->assertEmpty($second_shipment->getAdjustments());
 
     // No repack when the checkout page changed but the order items didn't.
     // The country change makes the DefaultPacker take over from TestPacker,
     // resulting in a single shipment.
-    $this->shipping_profile->address->country_code = 'RS';
-    $this->shipping_profile->save();
+    $this->shippingProfile->get('address')->country_code = 'RS';
+    $this->shippingProfile->save();
     $this->order->original = clone $this->order;
     $this->order->set('checkout_step', 'review');
     $this->processor->process($this->order);
@@ -145,15 +177,14 @@ class ShipmentOrderProcessorTest extends ShippingKernelTestBase {
   }
 
   /**
-   * Test the edge case of when admin deletes shipping profile.
+   * Test the edge case when the shipping profile has been deleted.
    *
    * @covers ::process
    */
   public function testProcessWithoutProfile() {
-    // This shipment created in setup will be deleted.
     $this->assertCount(1, $this->order->get('shipments')->referencedEntities());
 
-    // Add an item to trigger shouldRepack so that process() checks for profile.
+    // Add an item to trigger shouldRepack.
     $order_item = OrderItem::create([
       'type' => 'default',
       'quantity' => 2,
@@ -164,19 +195,9 @@ class ShipmentOrderProcessorTest extends ShippingKernelTestBase {
     $order_item->save();
     $this->order->addItem($order_item);
 
-    $this->shipping_profile->delete();
+    $this->shippingProfile->delete();
     $this->processor->process($this->order);
-    $this->assertEmpty($this->order->get('shipments')->referencedEntities());
-  }
-
-  /**
-   * Test the edge case of referencedEntities() method returning an empty array.
-   *
-   * @covers ::process
-   */
-  public function testProcessBrokenShipmentReference() {
-    $this->order->set('shipments', []);
-    $this->processor->process($this->order);
+    // Confirm that the shipment has been deleted.
     $this->assertEmpty($this->order->get('shipments')->referencedEntities());
   }
 

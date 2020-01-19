@@ -102,16 +102,10 @@ class ShippingOrderManager implements ShippingOrderManagerInterface {
     }
     $shipments = $order->get('shipments')->referencedEntities();
     list($shipments, $removed_shipments) = $this->packerManager->packToShipments($order, $profile, $shipments);
-
     // Delete any shipments that are no longer used.
     if (!empty($removed_shipments)) {
       $shipment_storage = $this->entityTypeManager->getStorage('commerce_shipment');
       $shipment_storage->delete($removed_shipments);
-    }
-    foreach ($shipments as $shipment) {
-      if ($shipment->hasTranslationChanges()) {
-        $shipment->save();
-      }
     }
 
     return $shipments;

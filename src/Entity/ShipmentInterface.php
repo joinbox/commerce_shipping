@@ -5,6 +5,7 @@ namespace Drupal\commerce_shipping\Entity;
 use Drupal\commerce_shipping\Plugin\Commerce\PackageType\PackageTypeInterface as PackageTypePluginInterface;
 use Drupal\commerce_shipping\ProposedShipment;
 use Drupal\commerce_shipping\ShipmentItem;
+use Drupal\commerce_order\EntityAdjustableInterface;
 use Drupal\commerce_price\Price;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
@@ -14,7 +15,7 @@ use Drupal\profile\Entity\ProfileInterface;
 /**
  * Defines the interface for shipments.
  */
-interface ShipmentInterface extends ContentEntityInterface, EntityChangedInterface {
+interface ShipmentInterface extends ContentEntityInterface, EntityAdjustableInterface, EntityChangedInterface {
 
   /**
    * Populates the shipment from the given proposed shipment.
@@ -245,6 +246,25 @@ interface ShipmentInterface extends ContentEntityInterface, EntityChangedInterfa
    * @return $this
    */
   public function setAmount(Price $amount);
+
+  /**
+   * Gets the adjusted shipment amount.
+   *
+   * @param string[] $adjustment_types
+   *   The adjustment types to include in the adjusted price.
+   *   Examples: fee, promotion, tax. Defaults to all adjustment types.
+   *
+   * @return \Drupal\commerce_price\Price|null
+   *   The adjusted shipment amount, or NULL.
+   */
+  public function getAdjustedAmount(array $adjustment_types = []);
+
+  /**
+   * Removes all adjustments that belong to the shipment.
+   *
+   * @return $this
+   */
+  public function clearAdjustments();
 
   /**
    * Gets the shipment tracking code.
