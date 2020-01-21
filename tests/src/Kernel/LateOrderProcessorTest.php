@@ -96,6 +96,7 @@ class LateOrderProcessorTest extends ShippingKernelTestBase {
       'type' => 'fee',
       'label' => 'Random fee',
       'amount' => new Price('2.00', 'USD'),
+      'locked' => TRUE,
     ]));
 
     $this->processor->process($this->order);
@@ -113,6 +114,8 @@ class LateOrderProcessorTest extends ShippingKernelTestBase {
     $second_adjustment = end($adjustments);
     $this->assertEquals('fee', $second_adjustment->getType());
     $this->assertEquals(new Price('2.00', 'USD'), $second_adjustment->getAmount());
+    // Confirm that locked adjustments are transferred unlocked.
+    $this->assertFalse($second_adjustment->isLocked());
   }
 
 }

@@ -43,6 +43,13 @@ class LateOrderProcessor implements OrderProcessorInterface {
           'source_id' => $shipment->id(),
         ]));
         foreach ($shipment->getAdjustments() as $adjustment) {
+          if ($adjustment->isLocked()) {
+            // Locked shipment adjustments must be transferred unlocked
+            // so that they're cleared at the beginning of order refresh.
+            $adjustment = new Adjustment([
+              'locked' => FALSE,
+            ] + $adjustment->toArray());
+          }
           $order->addAdjustment($adjustment);
         }
       }
