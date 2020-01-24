@@ -74,8 +74,8 @@ abstract class ShipmentPromotionOfferBase extends PromotionOfferBase implements 
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
 
-    $shipping_methods = NULL;
-    $shipping_method_ids = $this->getShippingMethodIds();
+    $uuids = $this->getShippingMethodUuids();
+    $shipping_method_ids = $this->entityUuidMapper->mapToIds('commerce_shipping_method', $uuids);
     $radio_parents = array_merge($form['#parents'], ['filter']);
     $radio_path = array_shift($radio_parents);
     $radio_path .= '[' . implode('][', $radio_parents) . ']';
@@ -135,14 +135,13 @@ abstract class ShipmentPromotionOfferBase extends PromotionOfferBase implements 
   }
 
   /**
-   * Gets the configured shipping method IDs.
+   * Gets the configured shipping method UUIDs.
    *
    * @return array
-   *   The shipping method IDs.
+   *   The shipping method UUIDs.
    */
-  protected function getShippingMethodIds() {
-    $uuids = array_column($this->configuration['shipping_methods'], 'shipping_method');
-    return $this->entityUuidMapper->mapToIds('commerce_shipping_method', $uuids);
+  protected function getShippingMethodUuids() {
+    return array_column($this->configuration['shipping_methods'], 'shipping_method');
   }
 
   /**
@@ -181,9 +180,12 @@ abstract class ShipmentPromotionOfferBase extends PromotionOfferBase implements 
       // No filtering required.
       return TRUE;
     }
-    $shipping_method_id = $shipment->getShippingMethodId();
-    $shipping_method_ids = $this->getShippingMethodIds();
-    $match = in_array($shipping_method_id, $shipping_method_ids);
+    $shipping_method = $shipment->getShippingMethod();
+    if (!$shipping_method) {
+      // The referenced shipping method has been deleted.
+      return FALSE;
+    }
+    $match = in_array($shipping_method->uuid(), $this->getShippingMethodUuids());
 
     return ($this->configuration['filter'] == 'include') ? $match : !$match;
   }
