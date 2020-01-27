@@ -93,3 +93,20 @@ commerce_shipping.commerce_package_type.*:
     weight:
       type: field.value.physical_measurement
       label: 'Weight'
+
+commerce_tax.commerce_tax_type.plugin.shipping:
+  type: commerce_tax_type_configuration
+  mapping:
+    strategy:
+      type: string
+      label: 'Strategy'
+    store_filter:
+      type: string
+      label: 'Store filter'
+    stores:
+      type: sequence
+      label: 'Stores'
+      orderby: value
+      sequence:
+        type: string
+        label: 'Store'
