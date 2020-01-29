@@ -51,6 +51,11 @@ services:
     tags:
       - { name: event_subscriber }
 
+  commerce_shipping.cart_subscriber:
+    class: Drupal\commerce_shipping\EventSubscriber\CartSubscriber
+    tags:
+      - { name: event_subscriber }
+
   commerce_shipping.route_subscriber:
     class: Drupal\commerce_shipping\EventSubscriber\RouteSubscriber
     tags:
