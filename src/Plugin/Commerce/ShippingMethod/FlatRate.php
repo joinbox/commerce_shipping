@@ -8,6 +8,7 @@ use Drupal\commerce_shipping\PackageTypeManagerInterface;
 use Drupal\commerce_shipping\ShippingRate;
 use Drupal\commerce_shipping\ShippingService;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\state_machine\WorkflowManagerInterface;
 
 /**
  * Provides the FlatRate shipping method.
@@ -30,9 +31,11 @@ class FlatRate extends ShippingMethodBase {
    *   The plugin implementation definition.
    * @param \Drupal\commerce_shipping\PackageTypeManagerInterface $package_type_manager
    *   The package type manager.
+   * @param \Drupal\state_machine\WorkflowManagerInterface $workflow_manager
+   *   The workflow manager.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, PackageTypeManagerInterface $package_type_manager) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition, $package_type_manager);
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, PackageTypeManagerInterface $package_type_manager, WorkflowManagerInterface $workflow_manager) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $package_type_manager, $workflow_manager);
 
     $this->services['default'] = new ShippingService('default', $this->configuration['rate_label']);
   }

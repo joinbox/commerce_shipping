@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\PluginBase;
+use Drupal\state_machine\WorkflowManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -24,6 +25,13 @@ abstract class ShippingMethodBase extends PluginBase implements ContainerFactory
    * @var \Drupal\commerce_shipping\PackageTypeManagerInterface
    */
   protected $packageTypeManager;
+
+  /**
+   * The workflow manager.
+   *
+   * @var \Drupal\state_machine\WorkflowManagerInterface
+   */
+  protected $workflowManager;
 
   /**
    * The shipping services.
@@ -52,11 +60,14 @@ abstract class ShippingMethodBase extends PluginBase implements ContainerFactory
    *   The plugin implementation definition.
    * @param \Drupal\commerce_shipping\PackageTypeManagerInterface $package_type_manager
    *   The package type manager.
+   * @param \Drupal\state_machine\WorkflowManagerInterface $workflow_manager
+   *   The workflow manager.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, PackageTypeManagerInterface $package_type_manager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, PackageTypeManagerInterface $package_type_manager, WorkflowManagerInterface $workflow_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->packageTypeManager = $package_type_manager;
+    $this->workflowManager = $workflow_manager;
     foreach ($this->pluginDefinition['services'] as $id => $label) {
       $this->services[$id] = new ShippingService($id, (string) $label);
     }
@@ -71,7 +82,8 @@ abstract class ShippingMethodBase extends PluginBase implements ContainerFactory
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('plugin.manager.commerce_package_type')
+      $container->get('plugin.manager.commerce_package_type'),
+      $container->get('plugin.manager.workflow')
     );
   }
 
@@ -160,7 +172,7 @@ abstract class ShippingMethodBase extends PluginBase implements ContainerFactory
       $service_ids = array_keys($services);
       $this->configuration['services'] = array_combine($service_ids, $service_ids);
     }
-    $workflows = \Drupal::service('plugin.manager.workflow')->getGroupedLabels('commerce_shipment');
+    $workflows = $this->workflowManager->getGroupedLabels('commerce_shipment');
     $workflows = reset($workflows);
 
     $form['default_package_type'] = [
@@ -197,7 +209,7 @@ abstract class ShippingMethodBase extends PluginBase implements ContainerFactory
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValue($form['#parents']);
     /** @var \Drupal\state_machine\Plugin\Workflow\WorkflowInterface $workflow */
-    $workflow = \Drupal::service('plugin.manager.workflow')->createInstance($values['workflow']);
+    $workflow = $this->workflowManager->createInstance($values['workflow']);
 
     // Verify "Finalize" transition.
     if (!$workflow->getTransition('finalize')) {
