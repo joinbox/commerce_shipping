@@ -3,6 +3,7 @@
 namespace Drupal\commerce_shipping\Entity;
 
 use Drupal\commerce_order\Entity\OrderInterface;
+use Drupal\commerce_price\Calculator;
 use Drupal\commerce_shipping\Plugin\Commerce\PackageType\PackageTypeInterface as PackageTypePluginInterface;
 use Drupal\commerce_shipping\ProposedShipment;
 use Drupal\commerce_shipping\ShipmentItem;
@@ -228,6 +229,17 @@ class Shipment extends ContentEntityBase implements ShipmentInterface {
     $this->set('items', $shipment_items);
     $this->recalculateWeight();
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTotalQuantity() {
+    $total_quantity = '0';
+    foreach ($this->getItems() as $item) {
+      $total_quantity = Calculator::add($total_quantity, $item->getQuantity());
+    }
+    return $total_quantity;
   }
 
   /**

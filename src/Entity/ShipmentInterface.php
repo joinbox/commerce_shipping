@@ -196,6 +196,16 @@ interface ShipmentInterface extends ContentEntityInterface, EntityAdjustableInte
   public function removeItem(ShipmentItem $shipment_item);
 
   /**
+   * Gets the total quantity.
+   *
+   * Represents the sum of the quantities of all shipment items.
+   *
+   * @return string
+   *   The total quantity.
+   */
+  public function getTotalQuantity();
+
+  /**
    * Gets the total declared value.
    *
    * Represents the sum of the declared values of all shipment items.
