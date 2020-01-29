@@ -31,18 +31,14 @@ class FlatRatePerItem extends FlatRate {
    * {@inheritdoc}
    */
   public function calculateRates(ShipmentInterface $shipment) {
-    $quantity = 0;
-    foreach ($shipment->getItems() as $shipment_item) {
-      $quantity += $shipment_item->getQuantity();
-    }
-    // Rate IDs aren't used in a flat rate scenario because there's always a
-    // single rate per plugin, and there's no support for purchasing rates.
-    $rate_id = 0;
-    $amount = $this->configuration['rate_amount'];
-    $amount = new Price($amount['number'], $amount['currency_code']);
-    $amount = $amount->multiply((string) $quantity);
+    $amount = Price::fromArray($this->configuration['rate_amount']);
+    $quantity = $shipment->getTotalQuantity();
     $rates = [];
-    $rates[] = new ShippingRate($rate_id, $this->services['default'], $amount);
+    $rates[] = new ShippingRate([
+      'shipping_method_id' => $this->parentEntity->id(),
+      'service' => $this->services['default'],
+      'amount' => $amount->multiply($quantity),
+    ]);
 
     return $rates;
   }
