@@ -11,7 +11,6 @@ use Drupal\commerce_shipping\Entity\ShipmentInterface;
 use Drupal\commerce_shipping\ShippingOrderManagerInterface;
 use Drupal\commerce_tax\Plugin\Commerce\TaxType\LocalTaxTypeInterface;
 use Drupal\commerce_tax\Plugin\Commerce\TaxType\TaxTypeBase;
-use Drupal\commerce_tax\TaxZone;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -251,8 +250,8 @@ class Shipping extends TaxTypeBase {
       return;
     }
     $zones = $tax_type_plugin->getZones();
-    $zone = $this->getZoneById($zones, $zone_id);
-    $default_rate = $this->getDefaultRate($zone);
+    $zone = $zones[$zone_id];
+    $default_rate = $zone->getDefaultRate();
     $percentage = $default_rate->getPercentage($order->getCalculationDate());
 
     foreach ($this->getShipments($order) as $shipment) {
@@ -415,53 +414,6 @@ class Shipping extends TaxTypeBase {
     }
 
     return $tax_amount;
-  }
-
-  /**
-   * Gets the tax zone with the given ID from the given set.
-   *
-   * @todo Replace this with $zones[$zone_id] once Shipping starts
-   *       requiring Commerce 2.16 (which keys zones by ID).
-   *
-   * @param \Drupal\commerce_tax\TaxZone[] $zones
-   *   The tax zones.
-   * @param string $zone_id
-   *   The tax zone ID.
-   *
-   * @return \Drupal\commerce_tax\TaxZone|null
-   *   The tax zone, or NULL if not found.
-   */
-  protected function getZoneById(array $zones, $zone_id) {
-    foreach ($zones as $zone) {
-      if ($zone->getId() == $zone_id) {
-        return $zone;
-      }
-    }
-  }
-
-  /**
-   * Gets the default rate for the given tax zone.
-   *
-   * @todo Replace this with $zone->getDefaultRate() once Shipping starts
-   *       requiring Commerce 2.16.
-   *
-   * @param \Drupal\commerce_tax\TaxZone $zone
-   *   The tax zone.
-   *
-   * @return \Drupal\commerce_tax\TaxRate
-   *   The default rate.
-   */
-  protected function getDefaultRate(TaxZone $zone) {
-    $rates = $zone->getRates();
-    $default_rate = reset($rates);
-    foreach ($rates as $rate) {
-      if ($rate->isDefault()) {
-        $default_rate = $rate;
-        break;
-      }
-    }
-
-    return $default_rate;
   }
 
 }
