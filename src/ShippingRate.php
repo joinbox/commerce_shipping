@@ -3,7 +3,6 @@
 namespace Drupal\commerce_shipping;
 
 use Drupal\commerce_price\Price;
-use Drupal\Core\Datetime\DrupalDateTime;
 
 /**
  * Represents a shipping rate.
@@ -16,6 +15,13 @@ final class ShippingRate {
    * @var string
    */
   protected $id;
+
+  /**
+   * The shipping method ID.
+   *
+   * @var string
+   */
+  protected $shippingMethodId;
 
   /**
    * The shipping service.
@@ -46,44 +52,37 @@ final class ShippingRate {
   protected $deliveryTerms;
 
   /**
-   * Constructs a new ShippingRate instance.
+   * Constructs a new ShippingRate object.
    *
-   * @param string $id
-   *   The ID.
-   * @param \Drupal\commerce_shipping\ShippingService $service
-   *   The shipping service.
-   * @param \Drupal\commerce_price\Price $amount
-   *   The amount.
-   * @param \Drupal\Core\Datetime\DrupalDateTime $delivery_date
-   *   The delivery date.
-   * @param string $delivery_terms
-   *   The delivery terms.
+   * @param array $definition
+   *   The definition.
    */
-  public function __construct($id, ShippingService $service, Price $amount, DrupalDateTime $delivery_date = NULL, $delivery_terms = NULL) {
-    $this->id = $id;
-    $this->service = $service;
-    $this->amount = $amount;
-    $this->deliveryDate = $delivery_date;
-    $this->deliveryTerms = $delivery_terms;
-  }
-
-  /**
-   * Creates a new shipping rate from the given array.
-   *
-   * @param array $shipping_rate
-   *   The shipping rate array, with the "id", "service" and "amount" keys.
-   *
-   * @return static
-   */
-  public static function fromArray(array $shipping_rate) {
-    if (!isset($shipping_rate['id'], $shipping_rate['service'], $shipping_rate['amount'])) {
-      throw new \InvalidArgumentException('ShippingRate::fromArray() called with a malformed array.');
+  public function __construct(array $definition) {
+    foreach (['shipping_method_id', 'service', 'amount'] as $required_property) {
+      if (empty($definition[$required_property])) {
+        throw new \InvalidArgumentException(sprintf('Missing required property %s.', $required_property));
+      }
     }
-    $shipping_rate += [
-      'delivery_date' => NULL,
-      'delivery_terms' => NULL,
-    ];
-    return new static($shipping_rate['id'], $shipping_rate['service'], $shipping_rate['amount'], $shipping_rate['delivery_date'], $shipping_rate['delivery_terms']);
+    if (!$definition['service'] instanceof ShippingService) {
+      throw new \InvalidArgumentException(sprintf('Property "service" should be an instance of %s.', ShippingService::class));
+    }
+    if (!$definition['amount'] instanceof Price) {
+      throw new \InvalidArgumentException(sprintf('Property "amount" should be an instance of %s.', Price::class));
+    }
+    // The ID is not required because most shipping methods generate one
+    // rate per service, and use the service ID when purchasing labels.
+    if (empty($definition['id'])) {
+      $shipping_method_id = $definition['shipping_method_id'];
+      $service_id = $definition['service']->getId();
+      $definition['id'] = $shipping_method_id . '--' . $service_id;
+    }
+
+    $this->id = $definition['id'];
+    $this->shippingMethodId = $definition['shipping_method_id'];
+    $this->service = $definition['service'];
+    $this->amount = $definition['amount'];
+    $this->deliveryDate = $definition['delivery_date'] ?? NULL;
+    $this->deliveryTerms = $definition['delivery_terms'] ?? NULL;
   }
 
   /**
@@ -94,6 +93,16 @@ final class ShippingRate {
    */
   public function getId() : string {
     return $this->id;
+  }
+
+  /**
+   * Gets the shipping method ID.
+   *
+   * @return string
+   *   The shipping method ID.
+   */
+  public function getShippingMethodId() : string {
+    return $this->shippingMethodId;
   }
 
   /**
@@ -151,6 +160,7 @@ final class ShippingRate {
   public function toArray() : array {
     return [
       'id' => $this->id,
+      'shipping_method_id' => $this->shippingMethodId,
       'service' => $this->service,
       'amount' => $this->amount,
       'delivery_date' => $this->deliveryDate,

@@ -94,13 +94,12 @@ class FlatRate extends ShippingMethodBase {
    * {@inheritdoc}
    */
   public function calculateRates(ShipmentInterface $shipment) {
-    // Rate IDs aren't used in a flat rate scenario because there's always a
-    // single rate per plugin, and there's no support for purchasing rates.
-    $rate_id = 0;
-    $amount = $this->configuration['rate_amount'];
-    $amount = new Price($amount['number'], $amount['currency_code']);
     $rates = [];
-    $rates[] = new ShippingRate($rate_id, $this->services['default'], $amount);
+    $rates[] = new ShippingRate([
+      'shipping_method_id' => $this->parentEntity->id(),
+      'service' => $this->services['default'],
+      'amount' => Price::fromArray($this->configuration['rate_amount']),
+    ]);
 
     return $rates;
   }

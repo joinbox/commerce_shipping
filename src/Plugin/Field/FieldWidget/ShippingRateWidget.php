@@ -136,13 +136,12 @@ class ShippingRateWidget extends WidgetBase implements ContainerFactoryPluginInt
     if ($selected_value) {
       /** @var \Drupal\commerce_shipping\ShippingRate $rate */
       $rate = $element[$selected_value]['#rate'];
-      list($shipping_method_id, $shipping_rate_id) = explode('--', $rate->getId());
       /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
       $shipment = $items[0]->getEntity();
 
       $shipping_method_storage = $this->entityTypeManager->getStorage('commerce_shipping_method');
       /** @var \Drupal\commerce_shipping\Entity\ShippingMethodInterface $shipping_method */
-      $shipping_method = $shipping_method_storage->load($shipping_method_id);
+      $shipping_method = $shipping_method_storage->load($rate->getShippingMethodId());
       $shipping_method_plugin = $shipping_method->getPlugin();
       if (empty($shipment->getPackageType())) {
         $shipment->setPackageType($shipping_method_plugin->getDefaultPackageType());

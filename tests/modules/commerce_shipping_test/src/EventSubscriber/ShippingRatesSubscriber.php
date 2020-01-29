@@ -33,7 +33,7 @@ class ShippingRatesSubscriber implements EventSubscriberInterface {
     $rate = reset($rates);
     $rate_values = $rate->toArray();
     $rate_values['amount'] = $rate->getAmount()->multiply('2');
-    $rate = ShippingRate::fromArray($rate_values);
+    $rate = new ShippingRate($rate_values);
     $event->setRates([$rate]);
   }
 

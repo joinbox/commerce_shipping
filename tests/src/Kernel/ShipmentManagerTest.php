@@ -135,10 +135,12 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     $second_rate = end($rates);
 
     $this->assertArrayHasKey($first_rate->getId(), $rates);
+    $this->assertEquals('3', $first_rate->getShippingMethodId());
     $this->assertEquals('default', $first_rate->getService()->getId());
     $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getAmount());
 
     $this->assertArrayHasKey($second_rate->getId(), $rates);
+    $this->assertEquals('1', $second_rate->getShippingMethodId());
     $this->assertEquals('default', $second_rate->getService()->getId());
     $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getAmount());
   }
@@ -155,10 +157,12 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     $second_rate = end($rates);
 
     $this->assertArrayHasKey($first_rate->getId(), $rates);
+    $this->assertEquals('3', $first_rate->getShippingMethodId());
     $this->assertEquals('default', $first_rate->getService()->getId());
     $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getAmount());
 
     $this->assertArrayHasKey($second_rate->getId(), $rates);
+    $this->assertEquals('1', $second_rate->getShippingMethodId());
     $this->assertEquals('default', $second_rate->getService()->getId());
     $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getAmount());
 
@@ -169,10 +173,12 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     $second_rate = end($rates);
 
     $this->assertArrayHasKey($first_rate->getId(), $rates);
+    $this->assertEquals('3', $first_rate->getShippingMethodId());
     $this->assertEquals('default', $first_rate->getService()->getId());
     $this->assertEquals(new Price('40.00', 'USD'), $first_rate->getAmount());
 
     $this->assertArrayHasKey($second_rate->getId(), $rates);
+    $this->assertEquals('1', $second_rate->getShippingMethodId());
     $this->assertEquals('default', $second_rate->getService()->getId());
     $this->assertEquals(new Price('10.00', 'USD'), $second_rate->getAmount());
   }

@@ -235,7 +235,7 @@ abstract class ShippingMethodBase extends PluginBase implements ContainerFactory
   public function selectRate(ShipmentInterface $shipment, ShippingRate $rate) {
     // Plugins can override this method to store additional information
     // on the shipment when the rate is selected (for example, the rate ID).
-    $shipment->setShippingMethodId($this->parentEntity->id());
+    $shipment->setShippingMethodId($rate->getShippingMethodId());
     $shipment->setShippingService($rate->getService()->getId());
     $shipment->setAmount($rate->getAmount());
   }
