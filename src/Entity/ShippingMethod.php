@@ -51,10 +51,10 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *     "status" = "status",
  *   },
  *   links = {
- *     "add-form" = "/admin/commerce/config/shipping-methods/add",
- *     "edit-form" = "/admin/commerce/config/shipping-methods/manage/{commerce_shipping_method}",
- *     "delete-form" = "/admin/commerce/config/shipping-methods/manage/{commerce_shipping_method}/delete",
- *     "collection" =  "/admin/commerce/config/shipping-methods"
+ *     "add-form" = "/admin/commerce/shipping-methods/add",
+ *     "edit-form" = "/admin/commerce/shipping-methods/manage/{commerce_shipping_method}",
+ *     "delete-form" = "/admin/commerce/shipping-methods/manage/{commerce_shipping_method}/delete",
+ *     "collection" =  "/admin/commerce/shipping-methods"
  *   }
  * )
  */
