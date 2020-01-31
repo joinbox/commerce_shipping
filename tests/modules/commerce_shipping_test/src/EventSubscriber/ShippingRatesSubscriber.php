@@ -30,11 +30,10 @@ class ShippingRatesSubscriber implements EventSubscriberInterface {
     if (empty($rates) || !$shipment->getData('alter_rate')) {
       return;
     }
+
     $rate = reset($rates);
-    $rate_values = $rate->toArray();
-    $rate_values['amount'] = $rate->getAmount()->multiply('2');
-    $rate = new ShippingRate($rate_values);
-    $event->setRates([$rate]);
+    $new_amount = $rate->getAmount()->multiply('2');
+    $rate->setAmount($new_amount);
   }
 
 }

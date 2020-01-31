@@ -82,17 +82,23 @@ class ShippingRateTest extends UnitTestCase {
    * @covers ::getShippingMethodId
    * @covers ::getService
    * @covers ::getAmount
+   * @covers ::setAmount
    * @covers ::getDeliveryDate
+   * @covers ::setDeliveryDate
    * @covers ::getDeliveryTerms
+   * @covers ::setDeliveryTerms
    * @covers ::toArray
    */
-  public function testGetters() {
+  public function testMethods() {
+    $first_date = new DrupalDateTime('2016-11-24', 'UTC', ['langcode' => 'en']);
+    $second_date = new DrupalDateTime('2016-12-01', 'UTC', ['langcode' => 'en']);
+
     $definition = [
       'id' => '717c2f9',
       'shipping_method_id' => 'standard',
       'service' => new ShippingService('test', 'Test'),
       'amount' => new Price('10.00', 'USD'),
-      'delivery_date' => new DrupalDateTime('2016-11-24', 'UTC', ['langcode' => 'en']),
+      'delivery_date' => $first_date,
       'delivery_terms' => 'Arrives right away',
     ];
 
@@ -104,6 +110,13 @@ class ShippingRateTest extends UnitTestCase {
     $this->assertEquals($definition['delivery_date'], $shipping_rate->getDeliveryDate());
     $this->assertEquals($definition['delivery_terms'], $shipping_rate->getDeliveryTerms());
     $this->assertEquals($definition, $shipping_rate->toArray());
+
+    $shipping_rate->setAmount(new Price('11.00', 'USD'));
+    $this->assertEquals(new Price('11.00', 'USD'), $shipping_rate->getAmount());
+    $shipping_rate->setDeliveryDate($second_date);
+    $this->assertEquals($second_date, $shipping_rate->getDeliveryDate());
+    $shipping_rate->setDeliveryTerms('Arrives tomorrow');
+    $this->assertEquals('Arrives tomorrow', $shipping_rate->getDeliveryTerms());
   }
 
   /**

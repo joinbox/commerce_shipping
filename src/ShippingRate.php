@@ -3,6 +3,7 @@
 namespace Drupal\commerce_shipping;
 
 use Drupal\commerce_price\Price;
+use Drupal\Core\Datetime\DrupalDateTime;
 
 /**
  * Represents a shipping rate.
@@ -129,6 +130,19 @@ final class ShippingRate {
   }
 
   /**
+   * Sets the amount.
+   *
+   * @param \Drupal\commerce_price\Price $amount
+   *   The amount.
+   *
+   * @return $this
+   */
+  public function setAmount(Price $amount) {
+    $this->amount = $amount;
+    return $this;
+  }
+
+  /**
    * Gets the delivery date, if known.
    *
    * @return \Drupal\Core\Datetime\DrupalDateTime|null
@@ -136,6 +150,19 @@ final class ShippingRate {
    */
   public function getDeliveryDate() {
     return $this->deliveryDate;
+  }
+
+  /**
+   * Sets the delivery date.
+   *
+   * @param \Drupal\Core\Datetime\DrupalDateTime $delivery_date
+   *   The delivery date.
+   *
+   * @return $this
+   */
+  public function setDeliveryDate(DrupalDateTime $delivery_date) {
+    $this->deliveryDate = $delivery_date;
+    return $this;
   }
 
   /**
@@ -149,6 +176,19 @@ final class ShippingRate {
    */
   public function getDeliveryTerms() {
     return $this->deliveryTerms;
+  }
+
+  /**
+   * Sets the delivery terms.
+   *
+   * @param string $delivery_terms
+   *   The delivery terms.
+   *
+   * @return $this
+   */
+  public function setDeliveryTerms(string $delivery_terms) {
+    $this->deliveryTerms = $delivery_terms;
+    return $this;
   }
 
   /**
