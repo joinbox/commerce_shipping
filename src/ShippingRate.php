@@ -39,18 +39,18 @@ final class ShippingRate {
   protected $amount;
 
   /**
+   * The description.
+   *
+   * @var string
+   */
+  protected $description;
+
+  /**
    * The delivery date.
    *
    * @var \Drupal\Core\Datetime\DrupalDateTime
    */
   protected $deliveryDate;
-
-  /**
-   * The delivery terms.
-   *
-   * @var string
-   */
-  protected $deliveryTerms;
 
   /**
    * Constructs a new ShippingRate object.
@@ -82,8 +82,8 @@ final class ShippingRate {
     $this->shippingMethodId = $definition['shipping_method_id'];
     $this->service = $definition['service'];
     $this->amount = $definition['amount'];
+    $this->description = $definition['description'] ?? '';
     $this->deliveryDate = $definition['delivery_date'] ?? NULL;
-    $this->deliveryTerms = $definition['delivery_terms'] ?? NULL;
   }
 
   /**
@@ -143,6 +143,31 @@ final class ShippingRate {
   }
 
   /**
+   * Gets the description.
+   *
+   * Displayed to the end-user when available.
+   *
+   * @return string
+   *   The description
+   */
+  public function getDescription() : string {
+    return $this->description;
+  }
+
+  /**
+   * Sets the description.
+   *
+   * @param string $description
+   *   The description.
+   *
+   * @return $this
+   */
+  public function setDescription(string $description) {
+    $this->description = $description;
+    return $this;
+  }
+
+  /**
    * Gets the delivery date, if known.
    *
    * @return \Drupal\Core\Datetime\DrupalDateTime|null
@@ -166,32 +191,6 @@ final class ShippingRate {
   }
 
   /**
-   * Gets the delivery terms, if known.
-   *
-   * Example: "Delivery in 1 to 3 business days."
-   * Can be displayed to the end-user, if no translation is required.
-   *
-   * @return string|null
-   *   The delivery terms, or NULL.
-   */
-  public function getDeliveryTerms() {
-    return $this->deliveryTerms;
-  }
-
-  /**
-   * Sets the delivery terms.
-   *
-   * @param string $delivery_terms
-   *   The delivery terms.
-   *
-   * @return $this
-   */
-  public function setDeliveryTerms(string $delivery_terms) {
-    $this->deliveryTerms = $delivery_terms;
-    return $this;
-  }
-
-  /**
    * Gets the array representation of the shipping rate.
    *
    * @return array
@@ -203,8 +202,8 @@ final class ShippingRate {
       'shipping_method_id' => $this->shippingMethodId,
       'service' => $this->service,
       'amount' => $this->amount,
+      'description' => $this->description,
       'delivery_date' => $this->deliveryDate,
-      'delivery_terms' => $this->deliveryTerms,
     ];
   }
 

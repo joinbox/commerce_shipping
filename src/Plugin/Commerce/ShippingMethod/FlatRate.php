@@ -46,6 +46,7 @@ class FlatRate extends ShippingMethodBase {
   public function defaultConfiguration() {
     return [
       'rate_label' => '',
+      'rate_description' => '',
       'rate_amount' => NULL,
       'services' => ['default'],
     ] + parent::defaultConfiguration();
@@ -66,9 +67,15 @@ class FlatRate extends ShippingMethodBase {
     $form['rate_label'] = [
       '#type' => 'textfield',
       '#title' => t('Rate label'),
-      '#description' => t('Shown to customers during checkout.'),
+      '#description' => t('Shown to customers when selecting the rate.'),
       '#default_value' => $this->configuration['rate_label'],
       '#required' => TRUE,
+    ];
+    $form['rate_description'] = [
+      '#type' => 'textfield',
+      '#title' => t('Rate description'),
+      '#description' => t('Provides additional details about the rate to the customer.'),
+      '#default_value' => $this->configuration['rate_description'],
     ];
     $form['rate_amount'] = [
       '#type' => 'commerce_price',
@@ -89,6 +96,7 @@ class FlatRate extends ShippingMethodBase {
     if (!$form_state->getErrors()) {
       $values = $form_state->getValue($form['#parents']);
       $this->configuration['rate_label'] = $values['rate_label'];
+      $this->configuration['rate_description'] = $values['rate_description'];
       $this->configuration['rate_amount'] = $values['rate_amount'];
     }
   }
@@ -102,6 +110,7 @@ class FlatRate extends ShippingMethodBase {
       'shipping_method_id' => $this->parentEntity->id(),
       'service' => $this->services['default'],
       'amount' => Price::fromArray($this->configuration['rate_amount']),
+      'description' => $this->configuration['rate_description'],
     ]);
 
     return $rates;

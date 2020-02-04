@@ -118,6 +118,9 @@ class ShippingRateWidget extends WidgetBase implements ContainerFactoryPluginInt
         '@service' => $rate->getService()->getLabel(),
         '@amount' => $this->currencyFormatter->format($amount->getNumber(), $amount->getCurrencyCode()),
       ]);
+      $element[$rate_id]['#description'] = $rate->getDescription();
+      // Tell Bootstrap not to turn the description into a tooltip.
+      $element[$rate_id]['#smart_description'] = FALSE;
       // Store the rate object for use in extractFormValues().
       $element[$rate_id]['#rate'] = $rate;
     }

@@ -175,6 +175,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
         'target_plugin_configuration' => [
           'default_package_type' => 'commerce_package_type:' . $package_type->get('uuid'),
           'rate_label' => 'Overnight shipping',
+          'rate_description' => 'At your door tomorrow morning',
           'rate_amount' => [
             'number' => '19.99',
             'currency_code' => 'USD',
@@ -277,6 +278,8 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->assertNotNull($first_radio_button);
     $this->assertNotNull($second_radio_button);
     $this->assertNotEmpty($first_radio_button->getAttribute('checked'));
+    // Confirm that the description for overnight shipping is shown.
+    $this->assertSession()->pageTextContains('At your door tomorrow morning');
 
     $this->submitForm([
       'payment_information[add_payment_method][payment_details][number]' => '4111111111111111',
@@ -374,6 +377,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
       $selector = '//fieldset[@data-drupal-selector="edit-shipping-information-shipments-0-shipping-method-0"]';
       $this->assertSession()->elementTextContains('xpath', $selector, 'Standard shipping: $9.99');
       $this->assertSession()->elementTextContains('xpath', $selector, 'Overnight shipping: $19.99');
+      $this->assertSession()->elementTextContains('xpath', $selector, 'At your door tomorrow morning');
     }
     $this->submitForm([
       'payment_information[add_payment_method][payment_details][number]' => '4111111111111111',
@@ -458,6 +462,8 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->assertNotNull($first_radio_button);
     $this->assertNotNull($second_radio_button);
     $this->assertNotEmpty($first_radio_button->getAttribute('checked'));
+    // Confirm that the description for overnight shipping is shown.
+    $this->assertSession()->pageTextContains('At your door tomorrow morning');
 
     // Complete the order information step.
     $address = [

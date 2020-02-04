@@ -160,6 +160,7 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
         'target_plugin_configuration' => [
           'default_package_type' => 'commerce_package_type:' . $package_type->get('uuid'),
           'rate_label' => 'Overnight shipping',
+          'rate_description' => 'At your door tomorrow morning',
           'rate_amount' => [
             'number' => '19.99',
             'currency_code' => 'USD',
@@ -319,6 +320,9 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     $this->assertNotNull($first_radio_button);
     $this->assertNotNull($second_radio_button);
     $this->assertNotEmpty($first_radio_button->getAttribute('checked'));
+    // Confirm that the description for overnight shipping is shown.
+    $this->assertSession()->pageTextContains('At your door tomorrow morning');
+
     $page->findButton('Recalculate shipping')->click();
     $this->assertSession()->assertWaitOnAjaxRequest();
     $this->submitForm([], 'Save');

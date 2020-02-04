@@ -49,6 +49,9 @@ commerce_shipping.commerce_shipping_method.plugin.flat_rate_per_item:
     rate_label:
       type: label
       label: 'Rate label'
+    rate_description:
+      type: label
+      label: 'Rate description'
     rate_amount:
       type: field.value.commerce_price
       label: 'Rate amount'

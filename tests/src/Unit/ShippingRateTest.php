@@ -83,10 +83,10 @@ class ShippingRateTest extends UnitTestCase {
    * @covers ::getService
    * @covers ::getAmount
    * @covers ::setAmount
+   * @covers ::getDescription
+   * @covers ::setDescription
    * @covers ::getDeliveryDate
    * @covers ::setDeliveryDate
-   * @covers ::getDeliveryTerms
-   * @covers ::setDeliveryTerms
    * @covers ::toArray
    */
   public function testMethods() {
@@ -98,8 +98,8 @@ class ShippingRateTest extends UnitTestCase {
       'shipping_method_id' => 'standard',
       'service' => new ShippingService('test', 'Test'),
       'amount' => new Price('10.00', 'USD'),
+      'description' => 'Delivery in 3-5 business days.',
       'delivery_date' => $first_date,
-      'delivery_terms' => 'Arrives right away',
     ];
 
     $shipping_rate = new ShippingRate($definition);
@@ -107,16 +107,16 @@ class ShippingRateTest extends UnitTestCase {
     $this->assertEquals($definition['shipping_method_id'], $shipping_rate->getShippingMethodId());
     $this->assertEquals($definition['service'], $shipping_rate->getService());
     $this->assertEquals($definition['amount'], $shipping_rate->getAmount());
+    $this->assertEquals($definition['description'], $shipping_rate->getDescription());
     $this->assertEquals($definition['delivery_date'], $shipping_rate->getDeliveryDate());
-    $this->assertEquals($definition['delivery_terms'], $shipping_rate->getDeliveryTerms());
     $this->assertEquals($definition, $shipping_rate->toArray());
 
     $shipping_rate->setAmount(new Price('11.00', 'USD'));
     $this->assertEquals(new Price('11.00', 'USD'), $shipping_rate->getAmount());
+    $shipping_rate->setDescription('Arrives yesterday.');
+    $this->assertEquals('Arrives yesterday.', $shipping_rate->getDescription());
     $shipping_rate->setDeliveryDate($second_date);
     $this->assertEquals($second_date, $shipping_rate->getDeliveryDate());
-    $shipping_rate->setDeliveryTerms('Arrives tomorrow');
-    $this->assertEquals('Arrives tomorrow', $shipping_rate->getDeliveryTerms());
   }
 
   /**
