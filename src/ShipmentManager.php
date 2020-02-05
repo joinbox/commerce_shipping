@@ -73,6 +73,7 @@ class ShipmentManager implements ShipmentManagerInterface {
       $this->eventDispatcher->dispatch(ShippingEvents::SHIPPING_RATES, $event);
       $rates = $event->getRates();
 
+      $rates = $this->sortRates($rates);
       foreach ($rates as $rate) {
         $all_rates[$rate->getId()] = $rate;
       }
@@ -103,6 +104,24 @@ class ShipmentManager implements ShipmentManagerInterface {
     }
 
     return $default_rate;
+  }
+
+  /**
+   * Sorts the given rates.
+   *
+   * @param \Drupal\commerce_shipping\ShippingRate[] $rates
+   *   The rates.
+   *
+   * @return \Drupal\commerce_shipping\ShippingRate[]
+   *   The sorted rates.
+   */
+  protected function sortRates(array $rates) {
+    // Sort by original_amount ascending.
+    uasort($rates, function (ShippingRate $first_rate, ShippingRate $second_rate) {
+      return $first_rate->getOriginalAmount()->compareTo($second_rate->getOriginalAmount());
+    });
+
+    return $rates;
   }
 
 }
