@@ -299,6 +299,23 @@ class Shipment extends ContentEntityBase implements ShipmentInterface {
   /**
    * {@inheritdoc}
    */
+  public function getOriginalAmount() {
+    if (!$this->get('original_amount')->isEmpty()) {
+      return $this->get('original_amount')->first()->toPrice();
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOriginalAmount(Price $original_amount) {
+    $this->set('original_amount', $original_amount);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getAmount() {
     if (!$this->get('amount')->isEmpty()) {
       return $this->get('amount')->first()->toPrice();
@@ -628,9 +645,15 @@ class Shipment extends ContentEntityBase implements ShipmentInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
+    $fields['original_amount'] = BaseFieldDefinition::create('commerce_price')
+      ->setLabel(t('Original amount'))
+      ->setDescription(t('The original amount.'))
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', TRUE);
+
     $fields['amount'] = BaseFieldDefinition::create('commerce_price')
       ->setLabel(t('Amount'))
-      ->setDescription(t('The shipment amount.'))
+      ->setDescription(t('The amount.'))
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', TRUE);
 

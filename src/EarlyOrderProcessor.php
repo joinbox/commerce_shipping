@@ -10,7 +10,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
  * Prepares shipments for the order refresh process.
  *
  * Runs before other order processors (promotion, tax, etc).
- * Packs the shipments and resets their adjustments.
+ * Packs the shipments, resets their amounts and adjustments.
  *
  * Once the other order processors perform their changes, the
  * LateOrderProcessor transfers the shipment adjustments to the order.
@@ -67,6 +67,9 @@ class EarlyOrderProcessor implements OrderProcessorInterface {
     }
 
     foreach ($shipments as $shipment) {
+      if ($original_amount = $shipment->getOriginalAmount()) {
+        $shipment->setAmount($original_amount);
+      }
       $shipment->clearAdjustments();
     }
     $order->set('shipments', $shipments);

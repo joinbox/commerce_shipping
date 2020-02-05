@@ -81,6 +81,8 @@ class ShippingRateTest extends UnitTestCase {
    * @covers ::getId
    * @covers ::getShippingMethodId
    * @covers ::getService
+   * @covers ::getOriginalAmount
+   * @covers ::setOriginalAmount
    * @covers ::getAmount
    * @covers ::setAmount
    * @covers ::getDescription
@@ -97,6 +99,7 @@ class ShippingRateTest extends UnitTestCase {
       'id' => '717c2f9',
       'shipping_method_id' => 'standard',
       'service' => new ShippingService('test', 'Test'),
+      'original_amount' => new Price('15.00', 'USD'),
       'amount' => new Price('10.00', 'USD'),
       'description' => 'Delivery in 3-5 business days.',
       'delivery_date' => $first_date,
@@ -106,11 +109,14 @@ class ShippingRateTest extends UnitTestCase {
     $this->assertEquals($definition['id'], $shipping_rate->getId());
     $this->assertEquals($definition['shipping_method_id'], $shipping_rate->getShippingMethodId());
     $this->assertEquals($definition['service'], $shipping_rate->getService());
+    $this->assertEquals($definition['original_amount'], $shipping_rate->getOriginalAmount());
     $this->assertEquals($definition['amount'], $shipping_rate->getAmount());
     $this->assertEquals($definition['description'], $shipping_rate->getDescription());
     $this->assertEquals($definition['delivery_date'], $shipping_rate->getDeliveryDate());
     $this->assertEquals($definition, $shipping_rate->toArray());
 
+    $shipping_rate->setOriginalAmount(new Price('14.00', 'USD'));
+    $this->assertEquals(new Price('14.00', 'USD'), $shipping_rate->getOriginalAmount());
     $shipping_rate->setAmount(new Price('11.00', 'USD'));
     $this->assertEquals(new Price('11.00', 'USD'), $shipping_rate->getAmount());
     $shipping_rate->setDescription('Arrives yesterday.');
@@ -121,8 +127,9 @@ class ShippingRateTest extends UnitTestCase {
 
   /**
    * @covers ::getId
+   * @covers ::getOriginalAmount
    */
-  public function testDefaultId() {
+  public function testDefaults() {
     $definition = [
       'shipping_method_id' => 'standard',
       'service' => new ShippingService('test', 'Test'),
@@ -131,6 +138,7 @@ class ShippingRateTest extends UnitTestCase {
 
     $shipping_rate = new ShippingRate($definition);
     $this->assertEquals('standard--test', $shipping_rate->getId());
+    $this->assertEquals($definition['amount'], $shipping_rate->getOriginalAmount());
   }
 
 }

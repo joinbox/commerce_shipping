@@ -63,6 +63,7 @@ abstract class ShipmentPromotionOfferBase extends PromotionOfferBase implements 
    */
   public function defaultConfiguration() {
     return [
+      'display_inclusive' => FALSE,
       'filter' => 'none',
       'shipping_methods' => [],
     ] + parent::defaultConfiguration();
@@ -80,6 +81,16 @@ abstract class ShipmentPromotionOfferBase extends PromotionOfferBase implements 
     $radio_path = array_shift($radio_parents);
     $radio_path .= '[' . implode('][', $radio_parents) . ']';
 
+    $form['display_inclusive'] = [
+      '#type' => 'radios',
+      '#title' => $this->t('Discount display'),
+      '#title_display' => 'invisible',
+      '#options' => [
+        TRUE => $this->t('Include the discount in the displayed amount'),
+        FALSE => $this->t('Only show the discount on the order total summary'),
+      ],
+      '#default_value' => (int) $this->configuration['display_inclusive'],
+    ];
     $form['filter'] = [
       '#type' => 'radios',
       '#title' => $this->t('Applies to'),
@@ -120,6 +131,7 @@ abstract class ShipmentPromotionOfferBase extends PromotionOfferBase implements 
 
     if (!$form_state->getErrors()) {
       $values = $form_state->getValue($form['#parents']);
+      $this->configuration['display_inclusive'] = $values['display_inclusive'];
       $this->configuration['filter'] = $values['filter'];
       $this->configuration['shipping_methods'] = [];
       if ($values['filter'] != 'none') {
@@ -132,6 +144,13 @@ abstract class ShipmentPromotionOfferBase extends PromotionOfferBase implements 
         }
       }
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isDisplayInclusive() {
+    return $this->configuration['display_inclusive'];
   }
 
   /**

@@ -48,6 +48,8 @@ class ShipmentTest extends ShippingKernelTestBase {
    * @covers ::getTotalDeclaredValue
    * @covers ::getWeight
    * @covers ::setWeight
+   * @covers ::getOriginalAmount
+   * @covers ::setOriginalAmount
    * @covers ::getAmount
    * @covers ::setAmount
    * @covers ::getAdjustments
@@ -158,6 +160,10 @@ class ShipmentTest extends ShippingKernelTestBase {
     $new_weight = new Weight('4', 'kg');
     $shipment->setWeight($new_weight);
     $this->assertEquals($new_weight, $shipment->getWeight());
+
+    $original_amount = new Price('15.00', 'USD');
+    $shipment->setOriginalAmount($original_amount);
+    $this->assertEquals($original_amount, $shipment->getOriginalAmount());
 
     $amount = new Price('10.00', 'USD');
     $shipment->setAmount($amount);

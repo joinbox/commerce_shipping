@@ -32,6 +32,13 @@ final class ShippingRate {
   protected $service;
 
   /**
+   * The original amount.
+   *
+   * @var \Drupal\commerce_price\Price
+   */
+  protected $originalAmount;
+
+  /**
    * The amount.
    *
    * @var \Drupal\commerce_price\Price
@@ -81,6 +88,7 @@ final class ShippingRate {
     $this->id = $definition['id'];
     $this->shippingMethodId = $definition['shipping_method_id'];
     $this->service = $definition['service'];
+    $this->originalAmount = $definition['original_amount'] ?? $definition['amount'];
     $this->amount = $definition['amount'];
     $this->description = $definition['description'] ?? '';
     $this->deliveryDate = $definition['delivery_date'] ?? NULL;
@@ -117,6 +125,31 @@ final class ShippingRate {
    */
   public function getService() : ShippingService {
     return $this->service;
+  }
+
+  /**
+   * Gets the original amount.
+   *
+   * This is the amount before promotions and fees are applied.
+   *
+   * @return \Drupal\commerce_price\Price
+   *   The original amount.
+   */
+  public function getOriginalAmount() : Price {
+    return $this->originalAmount;
+  }
+
+  /**
+   * Sets the original amount.
+   *
+   * @param \Drupal\commerce_price\Price $original_amount
+   *   The original amount.
+   *
+   * @return $this
+   */
+  public function setOriginalAmount(Price $original_amount) {
+    $this->originalAmount = $original_amount;
+    return $this;
   }
 
   /**
@@ -201,6 +234,7 @@ final class ShippingRate {
       'id' => $this->id,
       'shipping_method_id' => $this->shippingMethodId,
       'service' => $this->service,
+      'original_amount' => $this->originalAmount,
       'amount' => $this->amount,
       'description' => $this->description,
       'delivery_date' => $this->deliveryDate,

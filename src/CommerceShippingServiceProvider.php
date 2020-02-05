@@ -2,8 +2,11 @@
 
 namespace Drupal\commerce_shipping;
 
+use Drupal\commerce_shipping\EventSubscriber\PromotionSubscriber;
+use Drupal\commerce_shipping\EventSubscriber\TaxSubscriber;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
+use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * Registers event subscribers for non-required modules.
@@ -18,8 +21,14 @@ class CommerceShippingServiceProvider extends ServiceProviderBase {
     // @see \Drupal\Core\DrupalKernel::compileContainer()
     $modules = $container->getParameter('container.modules');
 
+    if (isset($modules['commerce_promotion'])) {
+      $container->register('commerce_shipping.promotion_subscriber', PromotionSubscriber::class)
+        ->addArgument(new Reference('entity_type.manager'))
+        ->addArgument(new Reference('plugin.manager.commerce_promotion_offer'))
+        ->addTag('event_subscriber');
+    }
     if (isset($modules['commerce_tax'])) {
-      $container->register('commerce_shipping.tax_subscriber', 'Drupal\commerce_shipping\EventSubscriber\TaxSubscriber')
+      $container->register('commerce_shipping.tax_subscriber', TaxSubscriber::class)
         ->addTag('event_subscriber');
     }
   }

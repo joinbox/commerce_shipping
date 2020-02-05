@@ -5,6 +5,8 @@ namespace Drupal\Tests\commerce_shipping\Kernel;
 use Drupal\commerce_order\Entity\Order;
 use Drupal\commerce_order\Entity\OrderItem;
 use Drupal\commerce_price\Price;
+use Drupal\commerce_promotion\Entity\Coupon;
+use Drupal\commerce_promotion\Entity\Promotion;
 use Drupal\commerce_shipping\Entity\Shipment;
 use Drupal\commerce_shipping\Entity\ShippingMethod;
 use Drupal\commerce_shipping\ShipmentItem;
@@ -26,17 +28,41 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
   protected $shipmentManager;
 
   /**
-   * A sample shipment.
+   * The sample order.
+   *
+   * @var \Drupal\commerce_order\Entity\OrderInterface
+   */
+  protected $order;
+
+  /**
+   * The sample shipment.
    *
    * @var \Drupal\commerce_shipping\Entity\ShipmentInterface
    */
   protected $shipment;
 
   /**
+   * The sample shipping methods.
+   *
+   * @var \Drupal\commerce_shipping\Entity\ShippingMethodInterface[]
+   */
+  protected $shippingMethods = [];
+
+  /**
+   * {@inheritdoc}
+   */
+  public static $modules = [
+    'commerce_promotion',
+  ];
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp() {
     parent::setUp();
+
+    $this->installEntitySchema('commerce_promotion');
+    $this->installEntitySchema('commerce_promotion_coupon');
 
     $this->shipmentManager = $this->container->get('commerce_shipping.shipment_manager');
     $order_item = OrderItem::create([
@@ -54,6 +80,7 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
       'order_items' => [$order_item],
     ]);
     $order->save();
+    $this->order = $order;
 
     $shipping_method = ShippingMethod::create([
       'stores' => $this->store->id(),
@@ -72,17 +99,7 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
       'weight' => 1,
     ]);
     $shipping_method->save();
-
-    $bad_shipping_method = ShippingMethod::create([
-      'stores' => $this->store->id(),
-      'name' => $this->randomString(),
-      'status' => TRUE,
-      'plugin' => [
-        'target_plugin_id' => 'exception_thrower',
-        'target_plugin_configuration' => [],
-      ],
-    ]);
-    $bad_shipping_method->save();
+    $this->shippingMethods[] = $shipping_method;
 
     $another_shipping_method = ShippingMethod::create([
       'stores' => $this->store->id(),
@@ -101,6 +118,18 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
       'weight' => 0,
     ]);
     $another_shipping_method->save();
+    $this->shippingMethods[] = $another_shipping_method;
+
+    $bad_shipping_method = ShippingMethod::create([
+      'stores' => $this->store->id(),
+      'name' => $this->randomString(),
+      'status' => TRUE,
+      'plugin' => [
+        'target_plugin_id' => 'exception_thrower',
+        'target_plugin_configuration' => [],
+      ],
+    ]);
+    $bad_shipping_method->save();
 
     $shipment = Shipment::create([
       'type' => 'default',
@@ -135,37 +164,18 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     $second_rate = end($rates);
 
     $this->assertArrayHasKey($first_rate->getId(), $rates);
-    $this->assertEquals('3', $first_rate->getShippingMethodId());
+    $this->assertEquals('2', $first_rate->getShippingMethodId());
     $this->assertEquals('default', $first_rate->getService()->getId());
+    $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getOriginalAmount());
     $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getAmount());
 
     $this->assertArrayHasKey($second_rate->getId(), $rates);
     $this->assertEquals('1', $second_rate->getShippingMethodId());
     $this->assertEquals('default', $second_rate->getService()->getId());
-    $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getAmount());
-  }
-
-  /**
-   * Tests the altering of shipping rates.
-   *
-   * @covers ::calculateRates
-   */
-  public function testEvent() {
-    $rates = $this->shipmentManager->calculateRates($this->shipment);
-    $this->assertCount(2, $rates);
-    $first_rate = reset($rates);
-    $second_rate = end($rates);
-
-    $this->assertArrayHasKey($first_rate->getId(), $rates);
-    $this->assertEquals('3', $first_rate->getShippingMethodId());
-    $this->assertEquals('default', $first_rate->getService()->getId());
-    $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getAmount());
-
-    $this->assertArrayHasKey($second_rate->getId(), $rates);
-    $this->assertEquals('1', $second_rate->getShippingMethodId());
-    $this->assertEquals('default', $second_rate->getService()->getId());
+    $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getOriginalAmount());
     $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getAmount());
 
+    // Test rate altering.
     $this->shipment->setData('alter_rate', TRUE);
     $rates = $this->shipmentManager->calculateRates($this->shipment);
     $this->assertCount(2, $rates);
@@ -173,14 +183,94 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     $second_rate = end($rates);
 
     $this->assertArrayHasKey($first_rate->getId(), $rates);
-    $this->assertEquals('3', $first_rate->getShippingMethodId());
+    $this->assertEquals('2', $first_rate->getShippingMethodId());
     $this->assertEquals('default', $first_rate->getService()->getId());
+    $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getOriginalAmount());
     $this->assertEquals(new Price('40.00', 'USD'), $first_rate->getAmount());
 
     $this->assertArrayHasKey($second_rate->getId(), $rates);
     $this->assertEquals('1', $second_rate->getShippingMethodId());
     $this->assertEquals('default', $second_rate->getService()->getId());
+    $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getOriginalAmount());
     $this->assertEquals(new Price('10.00', 'USD'), $second_rate->getAmount());
+  }
+
+  /**
+   * Tests the applying of display-inclusive promotions.
+   *
+   * @covers ::calculateRates
+   */
+  public function testPromotions() {
+    $first_promotion = Promotion::create([
+      'name' => 'Promotion 1',
+      'order_types' => [$this->order->bundle()],
+      'stores' => [$this->store->id()],
+      'offer' => [
+        'target_plugin_id' => 'shipment_fixed_amount_off',
+        'target_plugin_configuration' => [
+          'display_inclusive' => TRUE,
+          'filter' => 'include',
+          'shipping_methods' => [
+            ['shipping_method' => $this->shippingMethods[0]->uuid()],
+          ],
+          'amount' => [
+            'number' => '1.00',
+            'currency_code' => 'USD',
+          ],
+        ],
+      ],
+      'status' => TRUE,
+    ]);
+    $first_promotion->save();
+
+    $second_promotion = Promotion::create([
+      'name' => 'Promotion 1',
+      'order_types' => [$this->order->bundle()],
+      'stores' => [$this->store->id()],
+      'offer' => [
+        'target_plugin_id' => 'shipment_percentage_off',
+        'target_plugin_configuration' => [
+          'display_inclusive' => TRUE,
+          'filter' => 'include',
+          'shipping_methods' => [
+            ['shipping_method' => $this->shippingMethods[1]->uuid()],
+          ],
+          'percentage' => '0.5',
+        ],
+      ],
+      'status' => TRUE,
+    ]);
+    $second_promotion->save();
+
+    $coupon = Coupon::create([
+      'promotion_id' => $second_promotion->id(),
+      'code' => '50% off shipping',
+      'status' => TRUE,
+    ]);
+    $coupon->save();
+
+    $this->order->set('coupons', [$coupon]);
+    $this->order->setRefreshState(Order::REFRESH_SKIP);
+    $this->order->save();
+
+    $rates = $this->shipmentManager->calculateRates($this->shipment);
+    $this->assertCount(2, $rates);
+    $first_rate = reset($rates);
+    $second_rate = end($rates);
+
+    // The first rate should be reduced by the 50% off coupon.
+    $this->assertArrayHasKey($first_rate->getId(), $rates);
+    $this->assertEquals('2', $first_rate->getShippingMethodId());
+    $this->assertEquals('default', $first_rate->getService()->getId());
+    $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getOriginalAmount());
+    $this->assertEquals(new Price('10.00', 'USD'), $first_rate->getAmount());
+
+    // The second rate should be reduced by the $1 off promotion.
+    $this->assertArrayHasKey($second_rate->getId(), $rates);
+    $this->assertEquals('1', $second_rate->getShippingMethodId());
+    $this->assertEquals('default', $second_rate->getService()->getId());
+    $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getOriginalAmount());
+    $this->assertEquals(new Price('4.00', 'USD'), $second_rate->getAmount());
   }
 
   /**
@@ -192,7 +282,7 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     $rates = $this->shipmentManager->calculateRates($this->shipment);
     // The selected rate should be the first one (as a fallback).
     $default_rate = $this->shipmentManager->selectDefaultRate($this->shipment, $rates);
-    $this->assertEquals('3--default', $default_rate->getId());
+    $this->assertEquals('2--default', $default_rate->getId());
 
     // The selected rate should match the specified shipping method/service.
     $this->shipment->setShippingMethodId('1');

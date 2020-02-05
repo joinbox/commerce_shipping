@@ -73,3 +73,18 @@ function commerce_shipping_update_8202() {
     ->setDisplayConfigurable('view', FALSE);
   $entity_definition_update->installFieldStorageDefinition('adjustments', 'commerce_shipment', 'commerce_shipping', $storage_definition);
 }
+
+/**
+ * Add the 'original_amount' field to shipments.
+ */
+function commerce_shipping_update_8203() {
+  $entity_definition_update = \Drupal::entityDefinitionUpdateManager();
+
+  $storage_definition = BaseFieldDefinition::create('commerce_price')
+    ->setLabel(t('Original amount'))
+    ->setDescription(t('The original amount.'))
+    ->setDisplayConfigurable('form', FALSE)
+    ->setDisplayConfigurable('view', TRUE)
+    ->setInitialValueFromField('amount');
+  $entity_definition_update->installFieldStorageDefinition('original_amount', 'commerce_shipment', 'commerce_shipping', $storage_definition);
+}

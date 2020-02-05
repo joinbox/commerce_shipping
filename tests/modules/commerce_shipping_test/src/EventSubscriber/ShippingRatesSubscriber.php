@@ -4,7 +4,6 @@ namespace Drupal\commerce_shipping_test\EventSubscriber;
 
 use Drupal\commerce_shipping\Event\ShippingEvents;
 use Drupal\commerce_shipping\Event\ShippingRatesEvent;
-use Drupal\commerce_shipping\ShippingRate;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class ShippingRatesSubscriber implements EventSubscriberInterface {

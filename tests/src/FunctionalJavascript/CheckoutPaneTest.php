@@ -8,6 +8,7 @@ use Drupal\commerce_order\Entity\OrderType;
 use Drupal\commerce_payment\Entity\PaymentGateway;
 use Drupal\commerce_price\Price;
 use Drupal\commerce_product\Entity\ProductVariationType;
+use Drupal\commerce_promotion\Entity\Promotion;
 use Drupal\commerce_shipping\Entity\ShipmentType;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
@@ -57,6 +58,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
   public static $modules = [
     'commerce_payment',
     'commerce_payment_example',
+    'commerce_promotion',
     'commerce_shipping_test',
     'telephone',
   ];
@@ -216,6 +218,28 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
       ],
     ]);
 
+    $promotion = Promotion::create([
+      'name' => 'Promotion 1',
+      'order_types' => ['default'],
+      'stores' => [$this->store->id()],
+      'offer' => [
+        'target_plugin_id' => 'shipment_fixed_amount_off',
+        'target_plugin_configuration' => [
+          'display_inclusive' => TRUE,
+          'filter' => 'include',
+          'shipping_methods' => [
+            ['shipping_method' => $first_shipping_method->uuid()],
+          ],
+          'amount' => [
+            'number' => '3.00',
+            'currency_code' => 'USD',
+          ],
+        ],
+      ],
+      'status' => TRUE,
+    ]);
+    $promotion->save();
+
     // Create a different shipping profile type, which also has a Phone field.
     $bundle_entity_duplicator = $this->container->get('entity.bundle_entity_duplicator');
     $customer_profile_type = ProfileType::load('customer');
@@ -274,7 +298,8 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->assertSession()->pageTextContains('Shipping method');
     $page = $this->getSession()->getPage();
     $first_radio_button = $page->findField('Standard shipping: $9.99');
-    $second_radio_button = $page->findField('Overnight shipping: $19.99');
+    // The $19.99 is displayed crossed out, but Mink strips HTML.
+    $second_radio_button = $page->findField('Overnight shipping: $19.99 $16.99');
     $this->assertNotNull($first_radio_button);
     $this->assertNotNull($second_radio_button);
     $this->assertNotEmpty($first_radio_button->getAttribute('checked'));
@@ -376,7 +401,8 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
       // The radio buttons don't have access to their own labels.
       $selector = '//fieldset[@data-drupal-selector="edit-shipping-information-shipments-0-shipping-method-0"]';
       $this->assertSession()->elementTextContains('xpath', $selector, 'Standard shipping: $9.99');
-      $this->assertSession()->elementTextContains('xpath', $selector, 'Overnight shipping: $19.99');
+      // The $19.99 is displayed crossed out, but Mink strips HTML.
+      $this->assertSession()->elementTextContains('xpath', $selector, 'Overnight shipping: $19.99 $16.99');
       $this->assertSession()->elementTextContains('xpath', $selector, 'At your door tomorrow morning');
     }
     $this->submitForm([
@@ -458,7 +484,8 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->assertSession()->pageTextContains('Shipping method');
     $page = $this->getSession()->getPage();
     $first_radio_button = $page->findField('Standard shipping: $9.99');
-    $second_radio_button = $page->findField('Overnight shipping: $19.99');
+    // The $19.99 is displayed crossed out, but Mink strips HTML.
+    $second_radio_button = $page->findField('Overnight shipping: $19.99 $16.99');
     $this->assertNotNull($first_radio_button);
     $this->assertNotNull($second_radio_button);
     $this->assertNotEmpty($first_radio_button->getAttribute('checked'));

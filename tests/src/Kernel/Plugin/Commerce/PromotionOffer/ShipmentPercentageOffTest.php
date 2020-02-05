@@ -144,6 +144,7 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
     $first_shipment = reset($shipments);
     $first_shipment->setShippingMethodId($first_shipping_method->id());
     $first_shipment->setShippingService('default');
+    $first_shipment->setOriginalAmount(new Price('5', 'USD'));
     $first_shipment->setAmount(new Price('5', 'USD'));
     $first_shipment->addAdjustment(new Adjustment([
       'type' => 'shipping_promotion',
@@ -154,6 +155,7 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
     $second_shipment = end($shipments);
     $second_shipment->setShippingMethodId($second_shipping_method->id());
     $second_shipment->setShippingService('default');
+    $second_shipment->setOriginalAmount(new Price('20', 'USD'));
     $second_shipment->setAmount(new Price('20', 'USD'));
     $order->set('shipments', [$first_shipment, $second_shipment]);
     $order->setRefreshState(Order::REFRESH_SKIP);
@@ -167,6 +169,7 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
       'offer' => [
         'target_plugin_id' => 'shipment_percentage_off',
         'target_plugin_configuration' => [
+          'display_inclusive' => TRUE,
           'percentage' => '0.5',
         ],
       ],
@@ -176,11 +179,11 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
   }
 
   /**
-   * Tests the offer.
+   * Tests the display-inclusive offer.
    *
    * @covers ::applyToShipment
    */
-  public function testOffer() {
+  public function testDisplayInclusive() {
     $this->assertCount(0, $this->order->collectAdjustments());
     $this->assertEquals(new Price('20.00', 'USD'), $this->order->getTotalPrice());
     $this->order->setRefreshState(Order::REFRESH_ON_SAVE);
@@ -190,7 +193,8 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */
     $shipments = $this->order->get('shipments')->referencedEntities();
     $first_shipment = reset($shipments);
-    $this->assertEquals(new Price('5.00', 'USD'), $first_shipment->getAmount());
+    $this->assertEquals(new Price('5.00', 'USD'), $first_shipment->getOriginalAmount());
+    $this->assertEquals(new Price('3.00', 'USD'), $first_shipment->getAmount());
     $this->assertEquals(new Price('0.00', 'USD'), $first_shipment->getAdjustedAmount());
     $adjustments = $first_shipment->getAdjustments();
     $this->assertCount(2, $adjustments);
@@ -201,9 +205,11 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
     // amount at the time of application.
     $this->assertEquals(new Price('-2.00', 'USD'), $adjustment->getAmount());
     $this->assertEquals($this->promotion->id(), $adjustment->getSourceId());
+    $this->assertTrue($adjustment->isIncluded());
 
     $second_shipment = end($shipments);
-    $this->assertEquals(new Price('20.00', 'USD'), $second_shipment->getAmount());
+    $this->assertEquals(new Price('20.00', 'USD'), $second_shipment->getOriginalAmount());
+    $this->assertEquals(new Price('10.00', 'USD'), $second_shipment->getAmount());
     $this->assertEquals(new Price('10.00', 'USD'), $second_shipment->getAdjustedAmount());
     $adjustments = $second_shipment->getAdjustments();
     $this->assertCount(1, $adjustments);
@@ -212,6 +218,7 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
     $this->assertEquals('Shipping Discount', $adjustment->getLabel());
     $this->assertEquals(new Price('-10.00', 'USD'), $adjustment->getAmount());
     $this->assertEquals($this->promotion->id(), $adjustment->getSourceId());
+    $this->assertTrue($adjustment->isIncluded());
 
     // Confirm that the adjustments were transferred to the order.
     $this->assertCount(5, $this->order->collectAdjustments());
@@ -234,11 +241,13 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
 
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $first_shipment */
     $first_shipment = $this->reloadEntity($first_shipment);
-    $this->assertEquals(new Price('5.00', 'USD'), $first_shipment->getAmount());
+    $this->assertEquals(new Price('5.00', 'USD'), $first_shipment->getOriginalAmount());
+    $this->assertEquals(new Price('3.00', 'USD'), $first_shipment->getAmount());
     $this->assertEquals(new Price('0.00', 'USD'), $first_shipment->getAdjustedAmount());
     $this->assertCount(2, $first_shipment->getAdjustments());
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $second_shipment */
     $second_shipment = $this->reloadEntity($second_shipment);
+    $this->assertEquals(new Price('20.00', 'USD'), $second_shipment->getOriginalAmount());
     $this->assertEquals(new Price('20.00', 'USD'), $second_shipment->getAmount());
     $this->assertEquals(new Price('20.00', 'USD'), $second_shipment->getAdjustedAmount());
     $this->assertCount(0, $second_shipment->getAdjustments());
@@ -249,6 +258,56 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
     $this->assertCount(2, $this->order->collectAdjustments(['shipping']));
     $this->assertCount(2, $this->order->collectAdjustments(['shipping_promotion']));
     $this->assertEquals(new Price('40.00', 'USD'), $this->order->getTotalPrice());
+  }
+
+  /**
+   * Tests the non-display-inclusive offer.
+   *
+   * @covers ::applyToShipment
+   */
+  public function testNonDisplayInclusive() {
+    $offer = $this->promotion->getOffer();
+    $offer_configuration = $offer->getConfiguration();
+    $offer_configuration['display_inclusive'] = FALSE;
+    $offer->setConfiguration($offer_configuration);
+    $this->promotion->setOffer($offer);
+    $this->promotion->save();
+
+    $this->assertCount(0, $this->order->collectAdjustments());
+    $this->assertEquals(new Price('20.00', 'USD'), $this->order->getTotalPrice());
+    $this->order->setRefreshState(Order::REFRESH_ON_SAVE);
+    $this->order->save();
+
+    // Confirm that both shipments were discounted.
+    /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */
+    $shipments = $this->order->get('shipments')->referencedEntities();
+    $first_shipment = reset($shipments);
+    $this->assertEquals(new Price('5.00', 'USD'), $first_shipment->getOriginalAmount());
+    $this->assertEquals(new Price('5.00', 'USD'), $first_shipment->getAmount());
+    $this->assertEquals(new Price('0.00', 'USD'), $first_shipment->getAdjustedAmount());
+    $adjustments = $first_shipment->getAdjustments();
+    $this->assertCount(2, $adjustments);
+    $adjustment = end($adjustments);
+    $this->assertEquals('shipping_promotion', $adjustment->getType());
+    $this->assertEquals('Shipping Discount', $adjustment->getLabel());
+    // Confirm that the adjustment amount is equal to the remaining shipment
+    // amount at the time of application.
+    $this->assertEquals(new Price('-2.00', 'USD'), $adjustment->getAmount());
+    $this->assertEquals($this->promotion->id(), $adjustment->getSourceId());
+    $this->assertFalse($adjustment->isIncluded());
+
+    $second_shipment = end($shipments);
+    $this->assertEquals(new Price('20.00', 'USD'), $second_shipment->getOriginalAmount());
+    $this->assertEquals(new Price('20.00', 'USD'), $second_shipment->getAmount());
+    $this->assertEquals(new Price('10.00', 'USD'), $second_shipment->getAdjustedAmount());
+    $adjustments = $second_shipment->getAdjustments();
+    $this->assertCount(1, $adjustments);
+    $adjustment = reset($adjustments);
+    $this->assertEquals('shipping_promotion', $adjustment->getType());
+    $this->assertEquals('Shipping Discount', $adjustment->getLabel());
+    $this->assertEquals(new Price('-10.00', 'USD'), $adjustment->getAmount());
+    $this->assertEquals($this->promotion->id(), $adjustment->getSourceId());
+    $this->assertFalse($adjustment->isIncluded());
   }
 
 }

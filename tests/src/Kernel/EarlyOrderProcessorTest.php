@@ -108,11 +108,13 @@ class EarlyOrderProcessorTest extends ShippingKernelTestBase {
     $shipments = $shipping_order_manager->pack($order, $shipping_profile);
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
     $shipment = reset($shipments);
+    $shipment->setOriginalAmount(new Price('4', 'USD'));
     $shipment->setAmount(new Price('6', 'USD'));
     $shipment->addAdjustment(new Adjustment([
       'type' => 'fee',
       'label' => 'Handling fee',
       'amount' => new Price('2.00', 'USD'),
+      'included' => TRUE,
     ]));
     $shipment->save();
 
@@ -145,15 +147,18 @@ class EarlyOrderProcessorTest extends ShippingKernelTestBase {
     $this->processor->process($this->order);
     $shipments = $this->order->get('shipments')->referencedEntities();
 
-    // Confirm that an additional shipment was created, and that
-    // no adjustments are present.
-    $this->assertCount(2, $shipments);
+    // Confirm that the first shipment's amount and adjustments were reset.
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $first_shipment */
     $first_shipment = reset($shipments);
-    $this->assertEquals(new Price('6', 'USD'), $first_shipment->getAmount());
+    $this->assertEquals(new Price('4', 'USD'), $first_shipment->getOriginalAmount());
+    $this->assertEquals(new Price('4', 'USD'), $first_shipment->getAmount());
     $this->assertEmpty($first_shipment->getAdjustments());
+
+    // Confirm that an additional shipment was created.
+    $this->assertCount(2, $shipments);
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $second_shipment */
     $second_shipment = end($shipments);
+    $this->assertNull($second_shipment->getOriginalAmount());
     $this->assertNull($second_shipment->getAmount());
     $this->assertEmpty($second_shipment->getAdjustments());
 

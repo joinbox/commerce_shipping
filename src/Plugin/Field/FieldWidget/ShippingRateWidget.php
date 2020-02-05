@@ -4,6 +4,7 @@ namespace Drupal\commerce_shipping\Plugin\Field\FieldWidget;
 
 use CommerceGuys\Intl\Formatter\CurrencyFormatterInterface;
 use Drupal\commerce_shipping\ShipmentManagerInterface;
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
@@ -113,11 +114,22 @@ class ShippingRateWidget extends WidgetBase implements ContainerFactoryPluginInt
     $element['#default_value'] = $default_rate->getId();
     $element['#options'] = [];
     foreach ($rates as $rate_id => $rate) {
+      $original_amount = $rate->getOriginalAmount();
       $amount = $rate->getAmount();
-      $element['#options'][$rate_id] = $this->t('@service: @amount', [
-        '@service' => $rate->getService()->getLabel(),
-        '@amount' => $this->currencyFormatter->format($amount->getNumber(), $amount->getCurrencyCode()),
-      ]);
+      if ($original_amount->greaterThan($amount)) {
+        $rate_label = new FormattableMarkup('@service: <s>@original_amount</s> @amount', [
+          '@service' => $rate->getService()->getLabel(),
+          '@original_amount' => $this->currencyFormatter->format($original_amount->getNumber(), $original_amount->getCurrencyCode()),
+          '@amount' => $this->currencyFormatter->format($amount->getNumber(), $amount->getCurrencyCode()),
+        ]);
+      }
+      else {
+        $rate_label = new FormattableMarkup('@service: @amount', [
+          '@service' => $rate->getService()->getLabel(),
+          '@amount' => $this->currencyFormatter->format($amount->getNumber(), $amount->getCurrencyCode()),
+        ]);
+      }
+      $element['#options'][$rate_id] = $rate_label;
       $element[$rate_id]['#description'] = $rate->getDescription();
       // Tell Bootstrap not to turn the description into a tooltip.
       $element[$rate_id]['#smart_description'] = FALSE;

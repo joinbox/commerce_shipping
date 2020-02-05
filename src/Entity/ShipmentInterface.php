@@ -237,10 +237,30 @@ interface ShipmentInterface extends ContentEntityInterface, EntityAdjustableInte
   public function setWeight(Weight $weight);
 
   /**
-   * Gets the shipment amount.
+   * Gets the original amount.
    *
-   * Represents the cost of shipping the shipment using
-   * the selected shipping method and service.
+   * This is the amount before promotions and fees are applied.
+   *
+   * @return \Drupal\commerce_price\Price|null
+   *   The original amount, or NULL if unknown.
+   */
+  public function getOriginalAmount();
+
+  /**
+   * Sets the original amount.
+   *
+   * @param \Drupal\commerce_price\Price $original_amount
+   *   The original amount.
+   *
+   * @return $this
+   */
+  public function setOriginalAmount(Price $original_amount);
+
+  /**
+   * Gets the amount.
+   *
+   * Calculated from the original amount by applying
+   * promotions and fees during order refresh.
    *
    * @return \Drupal\commerce_price\Price|null
    *   The shipment amount, or NULL if unknown.
@@ -248,7 +268,7 @@ interface ShipmentInterface extends ContentEntityInterface, EntityAdjustableInte
   public function getAmount();
 
   /**
-   * Sets the shipment amount.
+   * Sets the amount.
    *
    * @param \Drupal\commerce_price\Price $amount
    *   The shipment amount.
@@ -258,14 +278,14 @@ interface ShipmentInterface extends ContentEntityInterface, EntityAdjustableInte
   public function setAmount(Price $amount);
 
   /**
-   * Gets the adjusted shipment amount.
+   * Gets the adjusted amount.
    *
    * @param string[] $adjustment_types
    *   The adjustment types to include in the adjusted price.
    *   Examples: fee, promotion, tax. Defaults to all adjustment types.
    *
    * @return \Drupal\commerce_price\Price|null
-   *   The adjusted shipment amount, or NULL.
+   *   The adjusted amount, or NULL.
    */
   public function getAdjustedAmount(array $adjustment_types = []);
 

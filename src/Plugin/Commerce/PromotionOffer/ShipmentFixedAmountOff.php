@@ -34,6 +34,11 @@ class ShipmentFixedAmountOff extends ShipmentPromotionOfferBase {
     if ($amount->greaterThan($remaining_amount)) {
       $amount = $remaining_amount;
     }
+    // Display-inclusive promotions must first be applied to the amount.
+    if ($this->isDisplayInclusive()) {
+      $new_shipment_amount = $shipment->getAmount()->subtract($amount);
+      $shipment->setAmount($new_shipment_amount);
+    }
 
     $shipment->addAdjustment(new Adjustment([
       'type' => 'shipping_promotion',
@@ -41,6 +46,7 @@ class ShipmentFixedAmountOff extends ShipmentPromotionOfferBase {
       'label' => $this->t('Shipping Discount'),
       'amount' => $amount->multiply('-1'),
       'source_id' => $promotion->id(),
+      'included' => $this->isDisplayInclusive(),
     ]));
   }
 
