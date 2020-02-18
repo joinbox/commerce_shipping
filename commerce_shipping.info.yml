@@ -2,7 +2,7 @@ name: Shipping
 type: module
 description: 'Provides core shipping functionality.'
 package: Commerce (contrib)
-core: 8.x
+core_version_requirement: ^8.7.7 || ^9
 configure: commerce_shipping.admin_overview
 dependencies:
   - commerce:commerce
