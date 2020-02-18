@@ -97,13 +97,17 @@ function commerce_shipping_post_update_2(&$sandbox = NULL) {
  * Create the 'checkout' form/view mode and displays for the shipment entity.
  */
 function commerce_shipping_post_update_3() {
+  /** @var \Drupal\commerce\Config\ConfigUpdaterInterface $config_updater */
   $config_updater = \Drupal::service('commerce.config_updater');
-  $config_updater->import([
+  $result = $config_updater->import([
     'core.entity_form_mode.commerce_shipment.checkout',
     'core.entity_form_display.commerce_shipment.default.checkout',
     'core.entity_view_mode.commerce_shipment.checkout',
     'core.entity_view_display.commerce_shipment.default.checkout',
   ]);
+  $message = implode('<br>', $result->getFailed());
+
+  return $message;
 }
 
 /**
@@ -116,19 +120,10 @@ function commerce_shipping_post_update_4() {
 
   /** @var \Drupal\commerce\Config\ConfigUpdaterInterface $config_updater */
   $config_updater = \Drupal::service('commerce.config_updater');
-  $config_names = [
+  $result = $config_updater->import([
     'core.entity_form_mode.profile.shipping',
-  ];
-  $result = $config_updater->import($config_names);
-
-  $message = '';
-  $failure_results = $result->getFailed();
-  if ($failure_results) {
-    $message .= t('Failed:') . '<br>';
-    foreach ($failure_results as $failure_message) {
-      $message .= $failure_message . '<br>';
-    }
-  }
+  ]);
+  $message = implode('<br>', $result->getFailed());
 
   return $message;
 }
