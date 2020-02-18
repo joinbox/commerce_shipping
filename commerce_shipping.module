@@ -5,13 +5,14 @@
  * Provides core shipping functionality.
  */
 
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\commerce\PurchasableEntityInterface;
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_order\Entity\OrderType;
 use Drupal\commerce_shipping\Entity\ShipmentType;
 use Drupal\entity\BundleFieldDefinition;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\Display\EntityFormDisplayInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
@@ -84,6 +85,21 @@ function commerce_shipping_entity_bundle_info_alter(&$bundles) {
       // if it's different from the default ("customer").
       $bundles['commerce_order'][$bundle]['shipping_profile_type'] = $shipping_profile_type_id;
     }
+  }
+}
+
+/**
+ * Implements hook_entity_form_display_alter().
+ */
+function commerce_shipping_entity_form_display_alter(EntityFormDisplayInterface $form_display, array $context) {
+  if ($context['entity_type'] != 'profile') {
+    return;
+  }
+
+  // The "shipping" form mode doesn't have a form display yet.
+  // Default to hiding the tax_number field, it is only needed for billing.
+  if ($context['form_mode'] == 'shipping' && $context['form_mode'] != $form_display->getMode()) {
+    $form_display->removeComponent('tax_number');
   }
 }
 
