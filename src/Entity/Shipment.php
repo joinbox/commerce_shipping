@@ -36,6 +36,7 @@ use Drupal\profile\Entity\ProfileInterface;
  *     "list_builder" = "Drupal\commerce_shipping\ShipmentListBuilder",
  *     "storage" = "Drupal\commerce_shipping\ShipmentStorage",
  *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
+ *     "views_data" = "Drupal\commerce\CommerceEntityViewsData",
  *     "form" = {
  *       "default" = "Drupal\commerce_shipping\Form\ShipmentForm",
  *       "add" = "Drupal\commerce_shipping\Form\ShipmentForm",
