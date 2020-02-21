@@ -5,6 +5,7 @@ namespace Drupal\commerce_shipping;
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
 use Drupal\commerce_shipping\Event\ShippingEvents;
 use Drupal\commerce_shipping\Event\ShippingRatesEvent;
+use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -17,6 +18,13 @@ class ShipmentManager implements ShipmentManagerInterface {
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
+
+  /**
+   * The entity repository.
+   *
+   * @var \Drupal\Core\Entity\EntityRepositoryInterface
+   */
+  protected $entityRepository;
 
   /**
    * The event dispatcher.
@@ -37,13 +45,16 @@ class ShipmentManager implements ShipmentManagerInterface {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
+   *   The entity repository.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher.
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, EventDispatcherInterface $event_dispatcher, LoggerInterface $logger) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, EntityRepositoryInterface $entity_repository, EventDispatcherInterface $event_dispatcher, LoggerInterface $logger) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->entityRepository = $entity_repository;
     $this->eventDispatcher = $event_dispatcher;
     $this->logger = $logger;
   }
@@ -57,6 +68,8 @@ class ShipmentManager implements ShipmentManagerInterface {
     $shipping_method_storage = $this->entityTypeManager->getStorage('commerce_shipping_method');
     $shipping_methods = $shipping_method_storage->loadMultipleForShipment($shipment);
     foreach ($shipping_methods as $shipping_method) {
+      /** @var \Drupal\commerce_shipping\Entity\ShippingMethodInterface $shipping_method */
+      $shipping_method = $this->entityRepository->getTranslationFromContext($shipping_method);
       $shipping_method_plugin = $shipping_method->getPlugin();
       try {
         $rates = $shipping_method_plugin->calculateRates($shipment);

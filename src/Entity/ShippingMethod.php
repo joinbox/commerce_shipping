@@ -36,13 +36,18 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *     "route_provider" = {
  *       "default" = "Drupal\entity\Routing\AdminHtmlRouteProvider",
  *     },
- *     "translation" = "Drupal\content_translation\ContentTranslationHandler",
+ *     "translation" = "Drupal\commerce_shipping\ShippingMethodTranslationHandler",
  *     "views_data" = "Drupal\commerce\CommerceEntityViewsData",
  *   },
  *   base_table = "commerce_shipping_method",
  *   data_table = "commerce_shipping_method_field_data",
  *   admin_permission = "administer commerce_shipping_method",
  *   translatable = TRUE,
+ *   translation = {
+ *     "content_translation" = {
+ *       "access_callback" = "content_translation_translate_access"
+ *     },
+ *   },
  *   entity_keys = {
  *     "id" = "shipping_method_id",
  *     "label" = "name",
@@ -54,11 +59,25 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *     "add-form" = "/admin/commerce/shipping-methods/add",
  *     "edit-form" = "/admin/commerce/shipping-methods/manage/{commerce_shipping_method}",
  *     "delete-form" = "/admin/commerce/shipping-methods/manage/{commerce_shipping_method}/delete",
- *     "collection" =  "/admin/commerce/shipping-methods"
+ *     "collection" =  "/admin/commerce/shipping-methods",
+ *     "drupal:content-translation-overview" = "/admin/commerce/shipping-methods/manage/{commerce_shipping_method}/translations",
+ *     "drupal:content-translation-add" = "/admin/commerce/shipping-methods/manage/{commerce_shipping_method}/translations/add/{source}/{target}",
+ *     "drupal:content-translation-edit" = "/admin/commerce/shipping-methods/manage/{commerce_shipping_method}/translations/edit/{language}",
+ *     "drupal:content-translation-delete" = "/admin/commerce/shipping-methods/manage/{commerce_shipping_method}/translations/delete/{language}",
  *   }
  * )
  */
 class ShippingMethod extends ContentEntityBase implements ShippingMethodInterface {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function toUrl($rel = 'canonical', array $options = []) {
+    if ($rel == 'canonical') {
+      $rel = 'edit-form';
+    }
+    return parent::toUrl($rel, $options);
+  }
 
   /**
    * {@inheritdoc}
@@ -266,6 +285,7 @@ class ShippingMethod extends ContentEntityBase implements ShippingMethodInterfac
       ->setLabel(t('Plugin'))
       ->setCardinality(1)
       ->setRequired(TRUE)
+      ->setTranslatable(TRUE)
       ->setDisplayOptions('form', [
         'type' => 'commerce_plugin_radios',
         'weight' => 1,

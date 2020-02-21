@@ -10,6 +10,7 @@ use Drupal\commerce_promotion\Entity\Promotion;
 use Drupal\commerce_shipping\Entity\Shipment;
 use Drupal\commerce_shipping\Entity\ShippingMethod;
 use Drupal\commerce_shipping\ShipmentItem;
+use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\physical\Weight;
 
 /**
@@ -53,6 +54,8 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
    */
   public static $modules = [
     'commerce_promotion',
+    'language',
+    'content_translation',
   ];
 
   /**
@@ -63,6 +66,9 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
 
     $this->installEntitySchema('commerce_promotion');
     $this->installEntitySchema('commerce_promotion_coupon');
+
+    ConfigurableLanguage::createFromLangcode('fr')->save();
+    $this->container->get('content_translation.manager')->setEnabled('commerce_shipping_method', 'commerce_shipping_method', TRUE);
 
     $this->shipmentManager = $this->container->get('commerce_shipping.shipment_manager');
     $order_item = OrderItem::create([
@@ -88,7 +94,7 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
       'plugin' => [
         'target_plugin_id' => 'flat_rate',
         'target_plugin_configuration' => [
-          'rate_label' => 'Flat rate',
+          'rate_label' => 'Standard shipping',
           'rate_amount' => [
             'number' => '5',
             'currency_code' => 'USD',
@@ -107,7 +113,7 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
       'plugin' => [
         'target_plugin_id' => 'flat_rate',
         'target_plugin_configuration' => [
-          'rate_label' => 'Flat rate',
+          'rate_label' => 'Overnight shipping',
           'rate_amount' => [
             'number' => '20',
             'currency_code' => 'USD',
@@ -116,6 +122,19 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
       ],
       'status' => TRUE,
       'weight' => 0,
+    ]);
+    $another_shipping_method->addTranslation('fr', [
+      'name' => 'Another shipping method (FR)',
+      'plugin' => [
+        'target_plugin_id' => 'flat_rate',
+        'target_plugin_configuration' => [
+          'rate_label' => 'Le overnight shipping',
+          'rate_amount' => [
+            'number' => '22',
+            'currency_code' => 'USD',
+          ],
+        ],
+      ],
     ]);
     $another_shipping_method->save();
     $this->shippingMethods[] = $another_shipping_method;
@@ -158,6 +177,9 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
    * @covers ::calculateRates
    */
   public function testCalculateRates() {
+    // Use the FR translation where available (e.g. $another_shipping_method).
+    $this->container->get('language.default')->set(ConfigurableLanguage::createFromLangcode('fr'));
+
     $rates = $this->shipmentManager->calculateRates($this->shipment);
     $this->assertCount(2, $rates);
     $first_rate = reset($rates);
@@ -166,12 +188,14 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     $this->assertArrayHasKey($first_rate->getId(), $rates);
     $this->assertEquals('2', $first_rate->getShippingMethodId());
     $this->assertEquals('default', $first_rate->getService()->getId());
-    $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getOriginalAmount());
-    $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getAmount());
+    $this->assertEquals('Le overnight shipping', $first_rate->getService()->getLabel());
+    $this->assertEquals(new Price('22.00', 'USD'), $first_rate->getOriginalAmount());
+    $this->assertEquals(new Price('22.00', 'USD'), $first_rate->getAmount());
 
     $this->assertArrayHasKey($second_rate->getId(), $rates);
     $this->assertEquals('1', $second_rate->getShippingMethodId());
     $this->assertEquals('default', $second_rate->getService()->getId());
+    $this->assertEquals('Standard shipping', $second_rate->getService()->getLabel());
     $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getOriginalAmount());
     $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getAmount());
 
@@ -185,12 +209,14 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     $this->assertArrayHasKey($first_rate->getId(), $rates);
     $this->assertEquals('2', $first_rate->getShippingMethodId());
     $this->assertEquals('default', $first_rate->getService()->getId());
-    $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getOriginalAmount());
-    $this->assertEquals(new Price('40.00', 'USD'), $first_rate->getAmount());
+    $this->assertEquals('Le overnight shipping', $first_rate->getService()->getLabel());
+    $this->assertEquals(new Price('22.00', 'USD'), $first_rate->getOriginalAmount());
+    $this->assertEquals(new Price('44.00', 'USD'), $first_rate->getAmount());
 
     $this->assertArrayHasKey($second_rate->getId(), $rates);
     $this->assertEquals('1', $second_rate->getShippingMethodId());
     $this->assertEquals('default', $second_rate->getService()->getId());
+    $this->assertEquals('Standard shipping', $second_rate->getService()->getLabel());
     $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getOriginalAmount());
     $this->assertEquals(new Price('10.00', 'USD'), $second_rate->getAmount());
   }
@@ -262,6 +288,7 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     $this->assertArrayHasKey($first_rate->getId(), $rates);
     $this->assertEquals('2', $first_rate->getShippingMethodId());
     $this->assertEquals('default', $first_rate->getService()->getId());
+    $this->assertEquals('Overnight shipping', $first_rate->getService()->getLabel());
     $this->assertEquals(new Price('20.00', 'USD'), $first_rate->getOriginalAmount());
     $this->assertEquals(new Price('10.00', 'USD'), $first_rate->getAmount());
 
@@ -269,6 +296,7 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
     $this->assertArrayHasKey($second_rate->getId(), $rates);
     $this->assertEquals('1', $second_rate->getShippingMethodId());
     $this->assertEquals('default', $second_rate->getService()->getId());
+    $this->assertEquals('Standard shipping', $second_rate->getService()->getLabel());
     $this->assertEquals(new Price('5.00', 'USD'), $second_rate->getOriginalAmount());
     $this->assertEquals(new Price('4.00', 'USD'), $second_rate->getAmount());
   }
