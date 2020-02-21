@@ -200,7 +200,7 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
     $this->assertCount(2, $adjustments);
     $adjustment = end($adjustments);
     $this->assertEquals('shipping_promotion', $adjustment->getType());
-    $this->assertEquals('Shipping Discount', $adjustment->getLabel());
+    $this->assertEquals('Discount', $adjustment->getLabel());
     // Confirm that the adjustment amount is equal to the remaining shipment
     // amount at the time of application.
     $this->assertEquals(new Price('-2.00', 'USD'), $adjustment->getAmount());
@@ -215,7 +215,7 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
     $this->assertCount(1, $adjustments);
     $adjustment = reset($adjustments);
     $this->assertEquals('shipping_promotion', $adjustment->getType());
-    $this->assertEquals('Shipping Discount', $adjustment->getLabel());
+    $this->assertEquals('Discount', $adjustment->getLabel());
     $this->assertEquals(new Price('-10.00', 'USD'), $adjustment->getAmount());
     $this->assertEquals($this->promotion->id(), $adjustment->getSourceId());
     $this->assertTrue($adjustment->isIncluded());
@@ -270,6 +270,7 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
     $offer_configuration = $offer->getConfiguration();
     $offer_configuration['display_inclusive'] = FALSE;
     $offer->setConfiguration($offer_configuration);
+    $this->promotion->setDisplayName('50% off');
     $this->promotion->setOffer($offer);
     $this->promotion->save();
 
@@ -289,7 +290,7 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
     $this->assertCount(2, $adjustments);
     $adjustment = end($adjustments);
     $this->assertEquals('shipping_promotion', $adjustment->getType());
-    $this->assertEquals('Shipping Discount', $adjustment->getLabel());
+    $this->assertEquals('50% off', $adjustment->getLabel());
     // Confirm that the adjustment amount is equal to the remaining shipment
     // amount at the time of application.
     $this->assertEquals(new Price('-2.00', 'USD'), $adjustment->getAmount());
@@ -304,7 +305,7 @@ class ShipmentPercentageOffTest extends ShippingKernelTestBase {
     $this->assertCount(1, $adjustments);
     $adjustment = reset($adjustments);
     $this->assertEquals('shipping_promotion', $adjustment->getType());
-    $this->assertEquals('Shipping Discount', $adjustment->getLabel());
+    $this->assertEquals('50% off', $adjustment->getLabel());
     $this->assertEquals(new Price('-10.00', 'USD'), $adjustment->getAmount());
     $this->assertEquals($this->promotion->id(), $adjustment->getSourceId());
     $this->assertFalse($adjustment->isIncluded());

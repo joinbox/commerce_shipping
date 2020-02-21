@@ -42,8 +42,7 @@ class ShipmentPercentageOff extends ShipmentPromotionOfferBase {
 
     $shipment->addAdjustment(new Adjustment([
       'type' => 'shipping_promotion',
-      // @todo Change to label from UI when added in #2770731.
-      'label' => $this->t('Shipping Discount'),
+      'label' => $promotion->getDisplayName() ?: $this->t('Discount'),
       'amount' => $amount->multiply('-1'),
       'percentage' => $percentage,
       'source_id' => $promotion->id(),
