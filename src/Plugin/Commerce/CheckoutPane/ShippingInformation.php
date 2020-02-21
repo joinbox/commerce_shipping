@@ -2,12 +2,12 @@
 
 namespace Drupal\commerce_shipping\Plugin\Commerce\CheckoutPane;
 
+use Drupal\commerce\AjaxFormTrait;
 use Drupal\commerce\InlineFormManager;
 use Drupal\commerce_checkout\Plugin\Commerce\CheckoutPane\CheckoutPaneBase;
 use Drupal\commerce_checkout\Plugin\Commerce\CheckoutFlow\CheckoutFlowInterface;
 use Drupal\commerce_shipping\OrderShipmentSummaryInterface;
 use Drupal\commerce_shipping\PackerManagerInterface;
-use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\EntityTypeBundleInfo;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -30,6 +30,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * )
  */
 class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPluginInterface {
+
+  use AjaxFormTrait;
 
   /**
    * The entity type bundle info.
@@ -195,7 +197,6 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
     foreach ($store->get('shipping_countries') as $country_item) {
       $available_countries[] = $country_item->value;
     }
-    $shipping_profile = $this->getShippingProfile();
     /** @var \Drupal\commerce\Plugin\Commerce\InlineForm\EntityInlineFormInterface $inline_form */
     $inline_form = $this->inlineFormManager->createInstance('customer_profile', [
       'profile_scope' => 'shipping',
@@ -203,27 +204,26 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
       'address_book_uid' => $this->order->getCustomerId(),
       // Don't copy the profile to address book until the order is placed.
       'copy_on_save' => FALSE,
-    ], $shipping_profile);
-
-    // Prepare the form for ajax.
-    // Not using Html::getUniqueId() on the wrapper ID to avoid #2675688.
-    $pane_form['#wrapper_id'] = 'shipping-information-wrapper';
-    $pane_form['#prefix'] = '<div id="' . $pane_form['#wrapper_id'] . '">';
-    $pane_form['#suffix'] = '</div>';
+    ], $this->getShippingProfile());
 
     $pane_form['shipping_profile'] = [
       '#parents' => array_merge($pane_form['#parents'], ['shipping_profile']),
       '#inline_form' => $inline_form,
     ];
     $pane_form['shipping_profile'] = $inline_form->buildInlineForm($pane_form['shipping_profile'], $form_state);
+    // The shipping_profile should always exist in form state (and not just
+    // after "Recalculate shipping" is clicked).
+    if (!$form_state->has('shipping_profile')) {
+      $form_state->set('shipping_profile', $inline_form->getEntity());
+    }
 
     $pane_form['recalculate_shipping'] = [
       '#type' => 'button',
       '#value' => $this->t('Recalculate shipping'),
       '#recalculate' => TRUE,
       '#ajax' => [
-        'callback' => [get_class($this), 'ajaxRefresh'],
-        'wrapper' => $pane_form['#wrapper_id'],
+        'callback' => [get_class($this), 'ajaxRefreshForm'],
+        'element' => $pane_form['#parents'],
       ],
       // The calculation process only needs a valid shipping profile.
       '#limit_validation_errors' => [
@@ -238,17 +238,9 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
       '#type' => 'container',
     ];
 
-    $shipments = $this->order->shipments->referencedEntities();
+    $shipping_profile = $form_state->get('shipping_profile');
+    $shipments = $this->order->get('shipments')->referencedEntities();
     $recalculate_shipping = $form_state->get('recalculate_shipping');
-    if ($recalculate_shipping) {
-      // Use the shipping profile set in validatePaneForm().
-      $shipping_profile = $form_state->get('shipping_profile');
-    }
-    else {
-      // Take the processed profile from the inline form, it
-      // might have been pre-filled from the address book.
-      $shipping_profile = $inline_form->getEntity();
-    }
     $force_packing = empty($shipments) && $this->canCalculateRates($shipping_profile);
     if ($recalculate_shipping || $force_packing) {
       // We're still relying on the packer manager for packing the order since
@@ -282,15 +274,6 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
   }
 
   /**
-   * Ajax callback.
-   */
-  public static function ajaxRefresh(array $form, FormStateInterface $form_state) {
-    $triggering_element = $form_state->getTriggeringElement();
-    $parents = array_slice($triggering_element['#parents'], 0, -1);
-    return NestedArray::getValue($form, $parents);
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function validatePaneForm(array &$pane_form, FormStateInterface $form_state, array &$complete_form) {
@@ -308,12 +291,12 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
 
     if ($recalculate) {
       $form_state->set('recalculate_shipping', TRUE);
-      /** @var \Drupal\commerce\Plugin\Commerce\InlineForm\EntityInlineFormInterface $inline_form */
-      $inline_form = $pane_form['shipping_profile']['#inline_form'];
-      // The profile in form state needs to reflect the submitted values, since
-      // it will be passed to the packers when the form is rebuilt.
-      $form_state->set('shipping_profile', $inline_form->getEntity());
     }
+    /** @var \Drupal\commerce\Plugin\Commerce\InlineForm\EntityInlineFormInterface $inline_form */
+    $inline_form = $pane_form['shipping_profile']['#inline_form'];
+    // The profile in form state needs to reflect the submitted values,
+    // for packers invoked on form rebuild, or "billing same as shipping".
+    $form_state->set('shipping_profile', $inline_form->getEntity());
 
     foreach ($shipment_indexes as $index) {
       $shipment = clone $pane_form['shipments'][$index]['#shipment'];
