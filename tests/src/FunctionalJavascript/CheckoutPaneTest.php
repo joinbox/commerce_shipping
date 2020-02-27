@@ -427,7 +427,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $billing_profile = $order->getBillingProfile();
     $this->assertNotEmpty($billing_profile);
     $this->assertEquals('customer', $billing_profile->bundle());
-    $this->assertEquals($this->defaultAddress['address_line1'], $billing_profile->get('address')->address_line1);
+    $this->assertEquals('Paris', $billing_profile->get('address')->locality);
 
     // Confirm the integrity of the shipments.
     $shipments = $order->get('shipments')->referencedEntities();
@@ -514,12 +514,6 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
       'payment_information[add_payment_method][payment_details][expiration][month]' => '02',
       'payment_information[add_payment_method][payment_details][expiration][year]' => '2020',
       'payment_information[add_payment_method][payment_details][security_code]' => '123',
-      'payment_information[add_payment_method][billing_information][address][0][address][given_name]' => 'Johnny',
-      'payment_information[add_payment_method][billing_information][address][0][address][family_name]' => 'Appleseed',
-      'payment_information[add_payment_method][billing_information][address][0][address][address_line1]' => '123 New York Drive',
-      'payment_information[add_payment_method][billing_information][address][0][address][locality]' => 'New York City',
-      'payment_information[add_payment_method][billing_information][address][0][address][administrative_area]' => 'NY',
-      'payment_information[add_payment_method][billing_information][address][0][address][postal_code]' => '10001',
     ], 'Continue to review');
 
     // Confirm that the review is rendered correctly.
@@ -558,6 +552,9 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->drupalGet($this->firstProduct->toUrl()->toString());
     $this->submitForm([], 'Add to cart');
     $this->drupalGet('checkout/1');
+    $this->getSession()->getPage()->uncheckField('payment_information[add_payment_method][billing_information][copy_fields][enable]');
+    $this->assertSession()->assertWaitOnAjaxRequest();
+
     $this->assertSession()->pageTextContains('Shipping information');
     // Confirm that the phone field is present, but only for shipping.
     $this->assertSession()->fieldExists('shipping_information[shipping_profile][field_phone][0][value]');
@@ -703,12 +700,6 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
       'payment_information[add_payment_method][payment_details][expiration][month]' => '02',
       'payment_information[add_payment_method][payment_details][expiration][year]' => '2020',
       'payment_information[add_payment_method][payment_details][security_code]' => '123',
-      'payment_information[add_payment_method][billing_information][address][0][address][given_name]' => 'Johnny',
-      'payment_information[add_payment_method][billing_information][address][0][address][family_name]' => 'Appleseed',
-      'payment_information[add_payment_method][billing_information][address][0][address][address_line1]' => '123 New York Drive',
-      'payment_information[add_payment_method][billing_information][address][0][address][locality]' => 'New York City',
-      'payment_information[add_payment_method][billing_information][address][0][address][administrative_area]' => 'NY',
-      'payment_information[add_payment_method][billing_information][address][0][address][postal_code]' => '10001',
     ], 'Continue to review');
 
     $this->assertSession()->pageTextContains('A valid shipping method must be selected in order to check out.');

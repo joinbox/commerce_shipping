@@ -295,7 +295,7 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
     /** @var \Drupal\commerce\Plugin\Commerce\InlineForm\EntityInlineFormInterface $inline_form */
     $inline_form = $pane_form['shipping_profile']['#inline_form'];
     // The profile in form state needs to reflect the submitted values,
-    // for packers invoked on form rebuild, or "billing same as shipping".
+    // for packers invoked on form rebuild, or "Billing same as shipping".
     $form_state->set('shipping_profile', $inline_form->getEntity());
 
     foreach ($shipment_indexes as $index) {

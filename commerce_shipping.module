@@ -129,6 +129,17 @@ function commerce_shipping_commerce_order_delete(OrderInterface $order) {
 }
 
 /**
+ * Implements hook_commerce_inline_form_PLUGIN_ID_alter().
+ */
+function commerce_shipping_commerce_inline_form_customer_profile_alter(array &$inline_form, FormStateInterface $form_state, array &$complete_form) {
+  // Attach the "Billing same as shipping" element.
+  $profile_field_copy = \Drupal::service('commerce_shipping.profile_field_copy');
+  if ($profile_field_copy->supportsForm($inline_form, $form_state)) {
+    $profile_field_copy->alterForm($inline_form, $form_state);
+  }
+}
+
+/**
  * Implements hook_form_FORM_ID_alter() for 'commerce_order_type_form'.
  */
 function commerce_shipping_form_commerce_order_type_form_alter(array &$form, FormStateInterface $form_state) {

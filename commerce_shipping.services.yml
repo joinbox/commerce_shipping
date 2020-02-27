@@ -61,6 +61,10 @@ services:
     tags:
       - { name: event_subscriber }
 
+  commerce_shipping.profile_field_copy:
+    class: Drupal\commerce_shipping\ProfileFieldCopy
+    arguments: ['@current_user']
+
   commerce_shipping.shipment_manager:
     class: Drupal\commerce_shipping\ShipmentManager
     arguments: ['@entity_type.manager', '@entity.repository', '@event_dispatcher', '@logger.channel.commerce_shipping']
