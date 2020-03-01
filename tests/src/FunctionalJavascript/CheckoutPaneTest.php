@@ -309,7 +309,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->submitForm([
       'payment_information[add_payment_method][payment_details][number]' => '4111111111111111',
       'payment_information[add_payment_method][payment_details][expiration][month]' => '02',
-      'payment_information[add_payment_method][payment_details][expiration][year]' => '2020',
+      'payment_information[add_payment_method][payment_details][expiration][year]' => '2024',
       'payment_information[add_payment_method][payment_details][security_code]' => '123',
     ], 'Continue to review');
 
@@ -408,7 +408,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->submitForm([
       'payment_information[add_payment_method][payment_details][number]' => '4111111111111111',
       'payment_information[add_payment_method][payment_details][expiration][month]' => '02',
-      'payment_information[add_payment_method][payment_details][expiration][year]' => '2020',
+      'payment_information[add_payment_method][payment_details][expiration][year]' => '2024',
       'payment_information[add_payment_method][payment_details][security_code]' => '123',
     ], 'Continue to review');
 
@@ -512,7 +512,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->submitForm([
       'payment_information[add_payment_method][payment_details][number]' => '4111111111111111',
       'payment_information[add_payment_method][payment_details][expiration][month]' => '02',
-      'payment_information[add_payment_method][payment_details][expiration][year]' => '2020',
+      'payment_information[add_payment_method][payment_details][expiration][year]' => '2024',
       'payment_information[add_payment_method][payment_details][security_code]' => '123',
     ], 'Continue to review');
 
@@ -591,7 +591,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->submitForm([
       'payment_information[add_payment_method][payment_details][number]' => '4111111111111111',
       'payment_information[add_payment_method][payment_details][expiration][month]' => '02',
-      'payment_information[add_payment_method][payment_details][expiration][year]' => '2020',
+      'payment_information[add_payment_method][payment_details][expiration][year]' => '2024',
       'payment_information[add_payment_method][payment_details][security_code]' => '123',
       'payment_information[add_payment_method][billing_information][address][0][address][given_name]' => 'Johnny',
       'payment_information[add_payment_method][billing_information][address][0][address][family_name]' => 'Appleseed',
@@ -698,7 +698,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->submitForm([
       'payment_information[add_payment_method][payment_details][number]' => '4111111111111111',
       'payment_information[add_payment_method][payment_details][expiration][month]' => '02',
-      'payment_information[add_payment_method][payment_details][expiration][year]' => '2020',
+      'payment_information[add_payment_method][payment_details][expiration][year]' => '2024',
       'payment_information[add_payment_method][payment_details][security_code]' => '123',
     ], 'Continue to review');
 
