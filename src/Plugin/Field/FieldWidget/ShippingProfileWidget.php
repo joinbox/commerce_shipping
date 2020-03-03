@@ -116,7 +116,7 @@ class ShippingProfileWidget extends WidgetBase implements ContainerFactoryPlugin
     // Workaround for massageFormValues() not getting $element.
     $element['array_parents'] = [
       '#type' => 'value',
-      '#value' => array_merge($element['#field_parents'], [$items->getName(), 'widget', $delta]),
+      '#value' => [$items->getName(), 'widget', $delta],
     ];
 
     return $element;

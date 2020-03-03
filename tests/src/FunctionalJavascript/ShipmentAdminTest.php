@@ -2,7 +2,9 @@
 
 namespace Drupal\Tests\commerce_shipping\FunctionalJavascript;
 
+use Behat\Mink\Element\NodeElement;
 use Drupal\commerce_order\Entity\Order;
+use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_order\Entity\OrderType;
 use Drupal\commerce_price\Price;
 use Drupal\commerce_product\Entity\ProductVariationType;
@@ -535,6 +537,117 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     $shipment->delete();
     $this->getSession()->reload();
     $this->assertSession()->pageTextContains('There are no shipments yet.');
+  }
+
+  /**
+   * Tests using inline_entity_form to manage an order's shipments.
+   *
+   * @requires module inline_entity_form
+   */
+  public function testInlineEntityFormIntegration() {
+    // Create a default billing profile to simplify testing.
+    $this->createEntity('profile', [
+      'type' => 'customer',
+      'uid' => $this->adminUser->id(),
+      'address' => $this->defaultAddress,
+      'field_phone' => '202-555-0108',
+    ]);
+    $address = [
+      'country_code' => 'US',
+      'administrative_area' => 'WI',
+      'locality' => 'Milwaukee',
+      'postal_code' => '53177',
+      'address_line1' => 'Pabst Blue Ribbon Dr',
+      'given_name' => 'Frederick',
+      'family_name' => 'Pabst',
+    ];
+    $shipping_profile = $this->createEntity('profile', [
+      'type' => 'customer_shipping',
+      'uid' => $this->adminUser->id(),
+      'address' => $address,
+      'field_phone' => '202-555-0108',
+    ]);
+
+    $form_display = commerce_get_entity_display('commerce_order', 'default', 'form');
+    $form_display->setComponent('shipments', [
+      'type' => 'inline_entity_form_complex',
+    ]);
+    $form_display->save();
+
+    $this->drupalGet($this->order->toUrl('edit-form'));
+    $this->getSession()->getPage()->pressButton('Add new shipment');
+    $this->assertSession()->assertWaitOnAjaxRequest();
+
+    $ief = $this->getSession()->getPage()->find('css', '[data-drupal-selector="edit-shipments-form-inline-entity-form"]');
+    $this->assertNotNull($ief);
+    $ief->fillField('shipments[form][inline_entity_form][title][0][value]', 'Shipment #1');
+    $ief->fillField('shipments[form][inline_entity_form][shipping_profile][0][profile][select_address]', $shipping_profile->id());
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $ief->pressButton('Create shipment');
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $this->getSession()->getPage()->pressButton('Save');
+
+    // Verify the address when viewing the order.
+    $rendered_shipping_information = $this->getSession()->getPage()->find('xpath', '//details//summary[contains(text(), "Shipping information")]');
+    $rendered_shipping_information->getParent();
+    $this->assertRenderedAddressInRegion($address, $rendered_shipping_information->getParent());
+
+    $this->drupalGet($this->order->toUrl('edit-form'));
+    $edit_shipment_button = $this->xpath('//input[@id="edit-shipments-entities-0-actions-ief-entity-edit"]')[0];
+    $edit_shipment_button->press();
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $this->getSession()->getPage()->fillField('shipments[form][inline_entity_form][entities][0][form][tracking_code][0][value]', 'CODE');
+    $this->getSession()->getPage()->fillField('shipments[form][inline_entity_form][entities][0][form][shipping_profile][0][profile][select_address]', $this->defaultProfile->id());
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $this->submitForm([], 'Save', 'commerce-order-default-edit-form');
+    $this->assertSession()->pageTextContains("The order {$this->order->getOrderNumber()} has been successfully saved.");
+
+    $rendered_shipping_information = $this->getSession()->getPage()->find('xpath', '//details//summary[contains(text(), "Shipping information")]');
+    $rendered_shipping_information->getParent();
+    $this->assertRenderedAddressInRegion($this->defaultAddress, $rendered_shipping_information->getParent());
+
+    // Try updating the shipping profile again, this time by clicking on the
+    // "Update shipment" button prior to saving the main form.
+    // @note part of this is commented out due to incompatibilities.
+    $this->drupalGet($this->order->toUrl('edit-form'));
+    $edit_shipment_button = $this->xpath('//input[@id="edit-shipments-entities-0-actions-ief-entity-edit"]')[0];
+    $edit_shipment_button->press();
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $ief = $this->getSession()->getPage()->find('css', '[data-drupal-selector="edit-shipments-form-inline-entity-form-entities-0-form"]');
+    $this->assertRenderedAddressInRegion($this->defaultAddress, $ief);
+    $this->assertSession()->fieldValueEquals('shipments[form][inline_entity_form][entities][0][form][tracking_code][0][value]', 'CODE');
+    $this->getSession()->getPage()->fillField('shipments[form][inline_entity_form][entities][0][form][shipping_profile][0][profile][select_address]', $shipping_profile->id());
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $this->assertRenderedAddressInRegion($address, $ief);
+    // @todo test when IEF + InlineForms are compatible.
+    // $ief->pressButton('Update shipment');
+    // $this->assertSession()->assertWaitOnAjaxRequest();
+    $this->submitForm([], 'Save', 'commerce-order-default-edit-form');
+    $this->assertSession()->pageTextContains("The order {$this->order->getOrderNumber()} has been successfully saved.");
+
+    $rendered_shipping_information = $this->getSession()->getPage()->find('xpath', '//details//summary[contains(text(), "Shipping information")]');
+    $rendered_shipping_information->getParent();
+    $this->assertRenderedAddressInRegion($address, $rendered_shipping_information->getParent());
+  }
+
+  /**
+   * Asserts that the given address is rendered on the page.
+   *
+   * @param array $address
+   *   The address.
+   * @param \Behat\Mink\Element\NodeElement $element
+   *   The parent element holding the address.
+   *
+   * @todo use assertRenderedAddress after https://www.drupal.org/project/commerce/issues/3117251
+   */
+  protected function assertRenderedAddressInRegion(array $address, NodeElement $element) {
+    $address_text = $element->find('css', 'p.address')->getText();
+    foreach ($address as $property => $value) {
+      if ($property === 'country_code') {
+        $value = $this->countryList[$value];
+      }
+      $this->assertContains($value, $address_text);
+    }
   }
 
 }

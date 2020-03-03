@@ -21,9 +21,13 @@ class DynamicRate extends FlatRate {
    * {@inheritdoc}
    */
   public function calculateRates(ShipmentInterface $shipment) {
-    $amount = Price::fromArray($this->configuration['rate_amount']);
-    $weight = $shipment->getPackageType()->getWeight()->convert('g')->getNumber() ?: 1;
     $rates = [];
+    $amount = Price::fromArray($this->configuration['rate_amount']);
+    $package_type = $shipment->getPackageType();
+    if ($package_type === NULL) {
+      return $rates;
+    }
+    $weight = $package_type->getWeight()->convert('g')->getNumber() ?: 1;
     $rates[] = new ShippingRate([
       'shipping_method_id' => $this->parentEntity->id(),
       'service' => $this->services['default'],

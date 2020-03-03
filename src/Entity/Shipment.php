@@ -43,6 +43,7 @@ use Drupal\profile\Entity\ProfileInterface;
  *       "edit" = "Drupal\commerce_shipping\Form\ShipmentForm",
  *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
  *     },
+ *     "inline_form" = "Drupal\commerce_shipping\Form\ShipmentInlineForm",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "route_provider" = {
  *       "default" = "Drupal\commerce_shipping\ShipmentRouteProvider",
