@@ -371,6 +371,58 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
         ],
       ],
     ]);
+    $this->createEntity('commerce_shipping_method', [
+      'name' => 'Wisconsin Express',
+      'stores' => [$this->store->id()],
+      'plugin' => [
+        'target_plugin_id' => 'flat_rate',
+        'target_plugin_configuration' => [
+          'rate_label' => 'Wisconsin Express',
+          'rate_amount' => [
+            'number' => '2.99',
+            'currency_code' => 'USD',
+          ],
+        ],
+      ],
+      'conditions' => [
+        [
+          'target_plugin_id' => 'shipment_address',
+          'target_plugin_configuration' => [
+            'zone' => [
+              'territories' => [
+                ['country_code' => 'US', 'administrative_area' => 'WI'],
+              ],
+            ],
+          ],
+        ],
+      ],
+    ]);
+    $this->createEntity('commerce_shipping_method', [
+      'name' => 'Carolina Special',
+      'stores' => [$this->store->id()],
+      'plugin' => [
+        'target_plugin_id' => 'flat_rate',
+        'target_plugin_configuration' => [
+          'rate_label' => 'Carolina Special',
+          'rate_amount' => [
+            'number' => '2.99',
+            'currency_code' => 'USD',
+          ],
+        ],
+      ],
+      'conditions' => [
+        [
+          'target_plugin_id' => 'shipment_address',
+          'target_plugin_configuration' => [
+            'zone' => [
+              'territories' => [
+                ['country_code' => 'US', 'administrative_area' => 'SC'],
+              ],
+            ],
+          ],
+        ],
+      ],
+    ]);
 
     $address = [
       'country_code' => 'US',
@@ -416,13 +468,20 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     $this->assertEquals(new Price('10', 'USD'), $shipment->getAmount());
 
     // Edit the shipment.
-    $this->drupalGet($this->shipmentUri);
-    $session = $this->assertSession();
-    $page = $this->getSession()->getPage();
-    $page->clickLink('Edit');
-    $session->addressEquals($this->shipmentUri . '/' . $shipment->id() . '/edit');
-    $session->fieldValueEquals('title[0][value]', $shipment->label());
-    $this->assertTrue($page->hasField($shipment->getItems()[0]->getTitle()));
+    $this->assertSession()->linkExists('Edit');
+    $this->drupalGet($shipment->toUrl('edit-form'));
+
+    $this->assertSession()->fieldValueEquals('title[0][value]', $shipment->label());
+    $shipment_item_title = $shipment->getItems()[0]->getTitle();
+    $this->assertSession()->fieldExists($shipment_item_title);
+
+    $this->getSession()->getPage()->pressButton('Recalculate shipping');
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $this->assertSession()->fieldExists('Overnight shipping: $19.99');
+    $this->assertSession()->fieldExists('Standard shipping: $9.99');
+    $this->assertSession()->fieldExists('The best shipping: $9.99');
+    $this->assertSession()->fieldNotExists('Carolina Special: $2.99');
+    $this->assertSession()->fieldExists('Wisconsin Express: $2.99');
 
     $this->assertRenderedAddress($address, 'shipping_profile[0][profile]');
     // Select the default profile instead.
@@ -442,9 +501,16 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
 
     // Change the package type.
     $package_type = PackageType::load('package_type_a');
-    $page->fillField('package_type', 'commerce_package_type:' . $package_type->uuid());
-    $page->pressButton('Recalculate shipping');
+    $this->getSession()->getPage()->fillField('package_type', 'commerce_package_type:' . $package_type->uuid());
+    $this->getSession()->getPage()->pressButton('Recalculate shipping');
     $this->assertSession()->assertWaitOnAjaxRequest();
+
+    $this->assertSession()->fieldExists('Overnight shipping: $19.99');
+    $this->assertSession()->fieldExists('Standard shipping: $9.99');
+    $this->assertSession()->fieldExists('The best shipping: $199.80');
+    $this->assertSession()->fieldExists('Carolina Special: $2.99');
+    $this->assertSession()->fieldNotExists('Wisconsin Express: $2.99');
+
     $this->submitForm([], 'Save');
 
     // Ensure the shipment has been updated.

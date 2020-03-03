@@ -13,6 +13,7 @@ use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\physical\Weight;
 use Drupal\physical\WeightUnit;
+use Drupal\profile\Entity\ProfileInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -218,9 +219,24 @@ class ShipmentForm extends ContentEntityForm {
       /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
       $shipment = $this->entity;
       $shipment->setTitle($form_state->getValue('title'));
-      $key = ['shipping_profile', '0', 'profile', 'address', '0', 'address'];
-      $address = $form_state->getValue($key);
-      $shipment->getShippingProfile()->address->setValue($address);
+
+      $base_form_key = ['shipping_profile', '0', 'profile'];
+      $selected_profile_key = array_merge($base_form_key, ['select_address']);
+      $selected_profile_id = $form_state->getValue($selected_profile_key);
+      $address_key = array_merge($base_form_key, ['address', '0', 'address']);
+      $address = $form_state->getValue($address_key);
+      // If an address was input, use that as an address override.
+      if ($address !== NULL) {
+        $shipment->getShippingProfile()->get('address')->setValue($address);
+      }
+      // If a different profile was selected, load it and use its address.
+      elseif ($selected_profile_id !== '_original') {
+        $profile_storage = $this->entityTypeManager->getStorage('profile');
+        $selected_profile = $profile_storage->load($selected_profile_id);
+        assert($selected_profile instanceof ProfileInterface);
+        $shipment->getShippingProfile()->set('address', $selected_profile->get('address'));
+      }
+
       // Add the shipping items.
       $this->addShippingItems($form, $form_state);
 
