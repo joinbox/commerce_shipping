@@ -307,10 +307,8 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     $this->assertSession()->optionExists('package_type', 'Package Type A');
     $this->assertTrue($page->hasButton('Recalculate shipping'));
     $this->assertSession()->pageTextContains('Shipment items');
-    $page->fillField('title[0][value]', 'Test shipment');
     list($order_item) = $this->order->getItems();
     $this->assertSession()->pageTextContains($order_item->label());
-    $page->checkField('shipment_items[1]');
 
     $this->assertRenderedAddress($this->defaultAddress, 'shipping_profile[0][profile]');
     $this->assertSession()->pageTextContains('202-555-0108');
@@ -325,7 +323,10 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
 
     $page->findButton('Recalculate shipping')->click();
     $this->assertSession()->assertWaitOnAjaxRequest();
-    $this->submitForm([], 'Save');
+    $this->submitForm([
+      'shipment_items[1]' => TRUE,
+      'title[0][value]' => 'Test shipment',
+    ], 'Save');
     $this->assertSession()->addressEquals($this->shipmentUri);
     $this->assertSession()->pageTextContains(t('Shipment for order @order created.', ['@order' => $this->order->getOrderNumber()]));
 
