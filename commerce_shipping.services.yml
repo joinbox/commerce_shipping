@@ -23,7 +23,7 @@ services:
 
   commerce_shipping.early_order_processor:
     class: Drupal\commerce_shipping\EarlyOrderProcessor
-    arguments: ['@entity_type.manager', '@commerce_shipping.order_manager']
+    arguments: ['@entity_type.manager', '@commerce_shipping.order_manager', '@commerce_shipping.shipment_manager']
     tags:
       - { name: commerce_order.order_processor, priority: 200 }
 
@@ -69,6 +69,12 @@ services:
   logger.channel.commerce_shipping:
     parent: logger.channel_base
     arguments: ['commerce_shipping']
+
+  commerce_shipping.order_item_subscriber:
+    class: Drupal\commerce_shipping\EventSubscriber\OrderItemSubscriber
+    arguments: ['@commerce_shipping.order_manager']
+    tags:
+      - { name: event_subscriber }
 
   plugin.manager.commerce_shipping_method:
     class: Drupal\commerce_shipping\ShippingMethodManager

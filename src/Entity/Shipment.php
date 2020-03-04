@@ -105,7 +105,6 @@ class Shipment extends ContentEntityBase implements ShipmentInterface {
       }
     }
     $this->prepareFields();
-    // @todo Reset the shipping method/service/amount if the items changed.
   }
 
   /**

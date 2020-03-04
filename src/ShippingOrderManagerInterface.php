@@ -8,6 +8,11 @@ use Drupal\profile\Entity\ProfileInterface;
 interface ShippingOrderManagerInterface {
 
   /**
+   * Data key used to flag an order's shipments for repacking and calculation.
+   */
+  const FORCE_REFRESH = 'shipping_force_refresh';
+
+  /**
    * Creates a shipping profile for the given order.
    *
    * @param \Drupal\commerce_order\Entity\OrderInterface $order

@@ -3,6 +3,7 @@
 namespace Drupal\commerce_shipping\EventSubscriber;
 
 use Drupal\commerce_cart\Event\CartEmptyEvent;
+use Drupal\commerce_cart\Event\CartEntityAddEvent;
 use Drupal\commerce_cart\Event\CartEvents;
 use Drupal\commerce_shipping\ShippingOrderManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -32,6 +33,7 @@ class CartSubscriber implements EventSubscriberInterface {
   public static function getSubscribedEvents() {
     return [
       CartEvents::CART_EMPTY => 'onCartEmpty',
+      CartEvents::CART_ENTITY_ADD => ['onCartEntityAdd', -100],
     ];
   }
 
@@ -58,6 +60,19 @@ class CartSubscriber implements EventSubscriberInterface {
       $shipment->delete();
     }
     $cart->set('shipments', []);
+  }
+
+  /**
+   * Force repack/rates recalculation when an order item is added to the cart.
+   *
+   * @param \Drupal\commerce_cart\Event\CartEntityAddEvent $event
+   *   The cart event.
+   */
+  public function onCartEntityAdd(CartEntityAddEvent $event) {
+    $cart = $event->getCart();
+    if ($this->shippingOrderManager->hasShipments($cart)) {
+      $cart->setData(ShippingOrderManagerInterface::FORCE_REFRESH, TRUE);
+    }
   }
 
 }

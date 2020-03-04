@@ -34,16 +34,26 @@ class EarlyOrderProcessor implements OrderProcessorInterface {
   protected $shippingOrderManager;
 
   /**
+   * The shipment manager.
+   *
+   * @var \Drupal\commerce_shipping\ShipmentManagerInterface
+   */
+  protected $shipmentManager;
+
+  /**
    * Constructs a new EarlyOrderProcessor object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
    * @param \Drupal\commerce_shipping\ShippingOrderManagerInterface $shipping_order_manager
    *   The shipping order manager.
+   * @param \Drupal\commerce_shipping\ShipmentManagerInterface $shipment_manager
+   *   The shipment manager.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, ShippingOrderManagerInterface $shipping_order_manager) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, ShippingOrderManagerInterface $shipping_order_manager, ShipmentManagerInterface $shipment_manager) {
     $this->entityTypeManager = $entity_type_manager;
     $this->shippingOrderManager = $shipping_order_manager;
+    $this->shipmentManager = $shipment_manager;
   }
 
   /**
@@ -66,12 +76,37 @@ class EarlyOrderProcessor implements OrderProcessorInterface {
       $shipments = $this->shippingOrderManager->pack($order, $shipping_profile);
     }
 
-    foreach ($shipments as $shipment) {
+    $should_refresh = $this->shouldRefresh($order);
+    foreach ($shipments as $key => $shipment) {
       if ($original_amount = $shipment->getOriginalAmount()) {
         $shipment->setAmount($original_amount);
       }
       $shipment->clearAdjustments();
+
+      if (!$should_refresh) {
+        continue;
+      }
+      $rates = $this->shipmentManager->calculateRates($shipment);
+
+      // There is no rates for shipping. "reset" the rate...
+      // Note that we don't remove the shipment to prevent data loss (we're
+      // mainly interested in preserving the shipping profile).
+      if (empty($rates)) {
+        // @todo: Move that logic to a method on the ShipmentManager?
+        $shipment->set('amount', NULL);
+        $shipment->set('original_amount', NULL);
+        $shipment->set('shipping_method', NULL);
+        $shipment->set('shipping_service', NULL);
+        continue;
+      }
+      $rate = $this->shipmentManager->selectDefaultRate($shipment, $rates);
+      $this->shipmentManager->applyRate($shipment, $rate);
     }
+    // Unset flag before returning updated shipments.
+    if ($should_refresh) {
+      $order->unsetData(ShippingOrderManagerInterface::FORCE_REFRESH);
+    }
+
     $order->set('shipments', $shipments);
   }
 
@@ -94,6 +129,13 @@ class EarlyOrderProcessor implements OrderProcessorInterface {
         return FALSE;
       }
     }
+
+    // Flag used for force repacking shipments and possible recalculation
+    // of rates.
+    if ($this->shouldRefresh($order)) {
+      return TRUE;
+    }
+
     // Ideally repacking would happen only if the order items changed.
     // However, it is not possible to detect order item quantity changes,
     // because the order items are saved before the order itself.
@@ -115,6 +157,20 @@ class EarlyOrderProcessor implements OrderProcessorInterface {
     }
 
     return TRUE;
+  }
+
+  /**
+   * Determines whether the order needs to be repacked and/or whether the
+   * shipping rates should be recalculated.
+   *
+   * @param \Drupal\commerce_order\Entity\OrderInterface $order
+   *   The order.
+   *
+   * @return bool
+   *   TRUE if it should refresh, FALSE otherwise.
+   */
+  protected function shouldRefresh(OrderInterface $order) {
+    return (bool) $order->getData(ShippingOrderManagerInterface::FORCE_REFRESH, FALSE);
   }
 
 }
