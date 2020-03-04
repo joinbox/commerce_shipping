@@ -4,9 +4,27 @@ namespace Drupal\commerce_shipping\EventSubscriber;
 
 use Drupal\commerce_cart\Event\CartEmptyEvent;
 use Drupal\commerce_cart\Event\CartEvents;
+use Drupal\commerce_shipping\ShippingOrderManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class CartSubscriber implements EventSubscriberInterface {
+
+  /**
+   * The shipping order manager.
+   *
+   * @var \Drupal\commerce_shipping\ShippingOrderManagerInterface
+   */
+  protected $shippingOrderManager;
+
+  /**
+   * Constructs a new CartSubscriber object.
+   *
+   * @param \Drupal\commerce_shipping\ShippingOrderManagerInterface $shipping_order_manager
+   *   The shipping order manager.
+   */
+  public function __construct(ShippingOrderManagerInterface $shipping_order_manager) {
+    $this->shippingOrderManager = $shipping_order_manager;
+  }
 
   /**
    * {@inheritdoc}
@@ -30,7 +48,7 @@ class CartSubscriber implements EventSubscriberInterface {
    */
   public function onCartEmpty(CartEmptyEvent $event) {
     $cart = $event->getCart();
-    if (!$cart->hasField('shipments') || $cart->get('shipments')->isEmpty()) {
+    if (!$this->shippingOrderManager->hasShipments($cart)) {
       return;
     }
 

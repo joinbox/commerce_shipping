@@ -21,20 +21,30 @@ class OrderShipmentSummary implements OrderShipmentSummaryInterface {
   protected $entityTypeManager;
 
   /**
+   * The shipping order manager.
+   *
+   * @var \Drupal\commerce_shipping\ShippingOrderManagerInterface
+   */
+  protected $shippingOrderManager;
+
+  /**
    * Constructs a new OrderShipmentSummary object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\commerce_shipping\ShippingOrderManagerInterface $shipping_order_manager
+   *   The shipping order manager.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, ShippingOrderManagerInterface $shipping_order_manager) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->shippingOrderManager = $shipping_order_manager;
   }
 
   /**
    * {@inheritdoc}
    */
   public function build(OrderInterface $order, $view_mode = 'user') {
-    if (!$order->hasField('shipments') || $order->get('shipments')->isEmpty()) {
+    if (!$this->shippingOrderManager->hasShipments($order)) {
       return [];
     }
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */

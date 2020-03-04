@@ -122,7 +122,9 @@ function commerce_shipping_field_widget_form_alter(&$element, FormStateInterface
  * Implements hook_ENTITY_TYPE_delete().
  */
 function commerce_shipping_commerce_order_delete(OrderInterface $order) {
-  if ($order->hasField('shipments') && !$order->get('shipments')->isEmpty()) {
+  /** @var \Drupal\commerce_shipping\ShippingOrderManagerInterface $shipping_order_manager */
+  $shipping_order_manager = \Drupal::service('commerce_shipping.order_manager');
+  if ($shipping_order_manager->hasShipments($order)) {
     $shipment_storage = \Drupal::entityTypeManager()->getStorage('commerce_shipment');
     $shipment_storage->delete($order->get('shipments')->referencedEntities());
   }

@@ -180,6 +180,26 @@ class ShippingOrderManagerTest extends ShippingKernelTestBase {
   }
 
   /**
+   * @covers ::hasShipments
+   */
+  public function testHasShipments() {
+    $this->assertFalse($this->shippingOrderManager->hasShipments($this->nonShippableOrder));
+    $this->assertFalse($this->shippingOrderManager->hasShipments($this->shippableOrder));
+    $shipping_profile = Profile::create([
+      'type' => 'customer',
+      'address' => [
+        'country_code' => 'FR',
+      ],
+    ]);
+    $shipping_profile->save();
+    $shipments = $this->shippingOrderManager->pack($this->shippableOrder, $shipping_profile);
+    $this->shippableOrder->set('shipments', $shipments);
+    $this->assertTrue($this->shippingOrderManager->hasShipments($this->shippableOrder));
+    $this->shippableOrder->set('shipments', []);
+    $this->assertFalse($this->shippingOrderManager->hasShipments($this->shippableOrder));
+  }
+
+  /**
    * @covers ::isShippable
    */
   public function testIsShippable() {

@@ -4,7 +4,6 @@ namespace Drupal\Tests\commerce_shipping\FunctionalJavascript;
 
 use Behat\Mink\Element\NodeElement;
 use Drupal\commerce_order\Entity\Order;
-use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_order\Entity\OrderType;
 use Drupal\commerce_price\Price;
 use Drupal\commerce_product\Entity\ProductVariationType;

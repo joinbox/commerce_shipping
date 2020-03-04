@@ -19,10 +19,27 @@ use Drupal\commerce_order\OrderProcessorInterface;
 class LateOrderProcessor implements OrderProcessorInterface {
 
   /**
+   * The shipping order manager.
+   *
+   * @var \Drupal\commerce_shipping\ShippingOrderManagerInterface
+   */
+  protected $shippingOrderManager;
+
+  /**
+   * Constructs a new LateOrderProcessor object.
+   *
+   * @param \Drupal\commerce_shipping\ShippingOrderManagerInterface $shipping_order_manager
+   *   The shipping order manager.
+   */
+  public function __construct(ShippingOrderManagerInterface $shipping_order_manager) {
+    $this->shippingOrderManager = $shipping_order_manager;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function process(OrderInterface $order) {
-    if (!$order->hasField('shipments') || $order->get('shipments')->isEmpty()) {
+    if (!$this->shippingOrderManager->hasShipments($order)) {
       return;
     }
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */

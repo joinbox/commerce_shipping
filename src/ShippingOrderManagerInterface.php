@@ -32,6 +32,17 @@ interface ShippingOrderManagerInterface {
   public function getProfile(OrderInterface $order);
 
   /**
+   * Checks if the given order has shipments.
+   *
+   * @param \Drupal\commerce_order\Entity\OrderInterface $order
+   *   The order.
+   *
+   * @return bool
+   *   TRUE if the order has shipments, FALSE otherwise.
+   */
+  public function hasShipments(OrderInterface $order);
+
+  /**
    * Determines whether the order is shippable.
    *
    * @param \Drupal\commerce_order\Entity\OrderInterface $order

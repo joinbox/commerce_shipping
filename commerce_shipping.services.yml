@@ -19,7 +19,7 @@ services:
 
   commerce_shipping.order_shipment_summary:
     class: Drupal\commerce_shipping\OrderShipmentSummary
-    arguments: ['@entity_type.manager']
+    arguments: ['@entity_type.manager', '@commerce_shipping.order_manager']
 
   commerce_shipping.early_order_processor:
     class: Drupal\commerce_shipping\EarlyOrderProcessor
@@ -29,6 +29,7 @@ services:
 
   commerce_shipping.late_order_processor:
     class: Drupal\commerce_shipping\LateOrderProcessor
+    arguments: ['@commerce_shipping.order_manager']
     tags:
       - { name: commerce_order.order_processor, priority: -100 }
 
@@ -39,6 +40,7 @@ services:
 
   commerce_shipping.order_subscriber:
     class: Drupal\commerce_shipping\EventSubscriber\OrderSubscriber
+    arguments: ['@commerce_shipping.order_manager']
     tags:
       - { name: event_subscriber }
 
@@ -48,11 +50,6 @@ services:
 
   commerce_shipping.profile_subscriber:
     class: Drupal\commerce_shipping\EventSubscriber\ProfileSubscriber
-    tags:
-      - { name: event_subscriber }
-
-  commerce_shipping.cart_subscriber:
-    class: Drupal\commerce_shipping\EventSubscriber\CartSubscriber
     tags:
       - { name: event_subscriber }
 

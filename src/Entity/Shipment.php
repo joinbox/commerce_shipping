@@ -498,13 +498,15 @@ class Shipment extends ContentEntityBase implements ShipmentInterface {
   public static function postDelete(EntityStorageInterface $storage, array $entities) {
     parent::postDelete($storage, $entities);
 
+    /** @var \Drupal\commerce_shipping\ShippingOrderManagerInterface $shipping_order_manager */
+    $shipping_order_manager = \Drupal::service('commerce_shipping.order_manager');
     // When shipments are being deleted, we need to make sure the parent order
     // is refreshed so that the corresponding shipping adjustment is removed.
     $orders_to_refresh = [];
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $entities */
     foreach ($entities as $shipment) {
       $order = $shipment->getOrder();
-      if (empty($order) || !$order->hasField('shipments') || $order->get('shipments')->isEmpty()) {
+      if (empty($order) || !$shipping_order_manager->hasShipments($order)) {
         continue;
       }
       $order_shipments = $order->get('shipments');

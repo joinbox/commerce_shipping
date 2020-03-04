@@ -2,6 +2,7 @@
 
 namespace Drupal\commerce_shipping;
 
+use Drupal\commerce_shipping\EventSubscriber\CartSubscriber;
 use Drupal\commerce_shipping\EventSubscriber\PromotionSubscriber;
 use Drupal\commerce_shipping\EventSubscriber\TaxSubscriber;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
@@ -27,8 +28,14 @@ class CommerceShippingServiceProvider extends ServiceProviderBase {
         ->addArgument(new Reference('plugin.manager.commerce_promotion_offer'))
         ->addTag('event_subscriber');
     }
+    if (isset($modules['commerce_cart'])) {
+      $container->register('commerce_shipping.cart_subscriber', CartSubscriber::class)
+        ->addArgument(new Reference('commerce_shipping.order_manager'))
+        ->addTag('event_subscriber');
+    }
     if (isset($modules['commerce_tax'])) {
       $container->register('commerce_shipping.tax_subscriber', TaxSubscriber::class)
+        ->addArgument(new Reference('commerce_shipping.order_manager'))
         ->addTag('event_subscriber');
     }
   }

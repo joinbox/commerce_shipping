@@ -34,7 +34,7 @@ class EarlyOrderProcessor implements OrderProcessorInterface {
   protected $shippingOrderManager;
 
   /**
-   * Constructs a new LateOrderProcessor object.
+   * Constructs a new EarlyOrderProcessor object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
@@ -50,7 +50,7 @@ class EarlyOrderProcessor implements OrderProcessorInterface {
    * {@inheritdoc}
    */
   public function process(OrderInterface $order) {
-    if (!$order->hasField('shipments') || $order->get('shipments')->isEmpty()) {
+    if (!$this->shippingOrderManager->hasShipments($order)) {
       return;
     }
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */

@@ -77,6 +77,13 @@ class ShippingOrderManager implements ShippingOrderManagerInterface {
   /**
    * {@inheritdoc}
    */
+  public function hasShipments(OrderInterface $order) {
+    return $order->hasField('shipments') && !$order->get('shipments')->isEmpty();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function isShippable(OrderInterface $order) {
     if (!$order->hasField('shipments')) {
       return FALSE;

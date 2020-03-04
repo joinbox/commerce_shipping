@@ -2,11 +2,28 @@
 
 namespace Drupal\commerce_shipping\EventSubscriber;
 
-use Drupal\commerce_order\Entity\OrderInterface;
+use Drupal\commerce_shipping\ShippingOrderManagerInterface;
 use Drupal\state_machine\Event\WorkflowTransitionEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class OrderSubscriber implements EventSubscriberInterface {
+
+  /**
+   * The shipping order manager.
+   *
+   * @var \Drupal\commerce_shipping\ShippingOrderManagerInterface
+   */
+  protected $shippingOrderManager;
+
+  /**
+   * Constructs a new OrderSubscriber object.
+   *
+   * @param \Drupal\commerce_shipping\ShippingOrderManagerInterface $shipping_order_manager
+   *   The shipping order manager.
+   */
+  public function __construct(ShippingOrderManagerInterface $shipping_order_manager) {
+    $this->shippingOrderManager = $shipping_order_manager;
+  }
 
   /**
    * {@inheritdoc}
@@ -30,7 +47,7 @@ class OrderSubscriber implements EventSubscriberInterface {
   public function onCancel(WorkflowTransitionEvent $event) {
     /** @var \Drupal\commerce_order\Entity\OrderInterface $order */
     $order = $event->getEntity();
-    if (!$this->orderHasShipments($order)) {
+    if (!$this->shippingOrderManager->hasShipments($order)) {
       return;
     }
 
@@ -55,7 +72,7 @@ class OrderSubscriber implements EventSubscriberInterface {
     /** @var \Drupal\commerce_order\Entity\OrderInterface $order */
     $order = $event->getEntity();
     $to_state = $event->getTransition()->getToState();
-    if ($to_state->getId() != 'fulfillment' || !$this->orderHasShipments($order)) {
+    if ($to_state->getId() != 'fulfillment' || !$this->shippingOrderManager->hasShipments($order)) {
       return;
     }
 
@@ -76,7 +93,7 @@ class OrderSubscriber implements EventSubscriberInterface {
   public function onValidate(WorkflowTransitionEvent $event) {
     /** @var \Drupal\commerce_order\Entity\OrderInterface $order */
     $order = $event->getEntity();
-    if (!$this->orderHasShipments($order)) {
+    if (!$this->shippingOrderManager->hasShipments($order)) {
       return;
     }
 
@@ -97,7 +114,7 @@ class OrderSubscriber implements EventSubscriberInterface {
   public function onFulfill(WorkflowTransitionEvent $event) {
     /** @var \Drupal\commerce_order\Entity\OrderInterface $order */
     $order = $event->getEntity();
-    if (!$this->orderHasShipments($order)) {
+    if (!$this->shippingOrderManager->hasShipments($order)) {
       return;
     }
 
@@ -107,19 +124,6 @@ class OrderSubscriber implements EventSubscriberInterface {
       $shipment->getState()->applyTransition($transition);
       $shipment->save();
     }
-  }
-
-  /**
-   * Checks if the given order has shipments.
-   *
-   * @param \Drupal\commerce_order\Entity\OrderInterface $order
-   *   The order.
-   *
-   * @return bool
-   *   TRUE if the order has shipments, FALSE otherwise.
-   */
-  protected function orderHasShipments(OrderInterface $order) {
-    return $order->hasField('shipments') && !$order->get('shipments')->isEmpty();
   }
 
 }

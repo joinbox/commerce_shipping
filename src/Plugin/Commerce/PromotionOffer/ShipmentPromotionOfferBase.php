@@ -8,6 +8,7 @@ use Drupal\commerce_price\RounderInterface;
 use Drupal\commerce_promotion\Entity\PromotionInterface;
 use Drupal\commerce_promotion\Plugin\Commerce\PromotionOffer\PromotionOfferBase;
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
+use Drupal\commerce_shipping\ShippingOrderManagerInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -25,6 +26,13 @@ abstract class ShipmentPromotionOfferBase extends PromotionOfferBase implements 
   protected $entityUuidMapper;
 
   /**
+   * The shipping order manager.
+   *
+   * @var \Drupal\commerce_shipping\ShippingOrderManagerInterface
+   */
+  protected $shippingOrderManager;
+
+  /**
    * Constructs a new ShipmentPromotionOfferBase object.
    *
    * @param array $configuration
@@ -38,11 +46,14 @@ abstract class ShipmentPromotionOfferBase extends PromotionOfferBase implements 
    *   The rounder.
    * @param \Drupal\commerce\EntityUuidMapperInterface $entity_uuid_mapper
    *   The entity UUID mapper.
+   * @param \Drupal\commerce_shipping\ShippingOrderManagerInterface $shipping_order_manager
+   *   The shipping order manager.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, RounderInterface $rounder, EntityUuidMapperInterface $entity_uuid_mapper) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, RounderInterface $rounder, EntityUuidMapperInterface $entity_uuid_mapper, ShippingOrderManagerInterface $shipping_order_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $rounder);
 
     $this->entityUuidMapper = $entity_uuid_mapper;
+    $this->shippingOrderManager = $shipping_order_manager;
   }
 
   /**
@@ -54,7 +65,8 @@ abstract class ShipmentPromotionOfferBase extends PromotionOfferBase implements 
       $plugin_id,
       $plugin_definition,
       $container->get('commerce_price.rounder'),
-      $container->get('commerce.entity_uuid_mapper')
+      $container->get('commerce.entity_uuid_mapper'),
+      $container->get('commerce_shipping.order_manager')
     );
   }
 

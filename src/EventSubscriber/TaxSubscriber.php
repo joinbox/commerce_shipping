@@ -2,10 +2,28 @@
 
 namespace Drupal\commerce_shipping\EventSubscriber;
 
+use Drupal\commerce_shipping\ShippingOrderManagerInterface;
 use Drupal\commerce_tax\Event\CustomerProfileEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class TaxSubscriber implements EventSubscriberInterface {
+
+  /**
+   * The shipping order manager.
+   *
+   * @var \Drupal\commerce_shipping\ShippingOrderManagerInterface
+   */
+  protected $shippingOrderManager;
+
+  /**
+   * Constructs a new TaxSubscriber object.
+   *
+   * @param \Drupal\commerce_shipping\ShippingOrderManagerInterface $shipping_order_manager
+   *   The shipping order manager.
+   */
+  public function __construct(ShippingOrderManagerInterface $shipping_order_manager) {
+    $this->shippingOrderManager = $shipping_order_manager;
+  }
 
   /**
    * {@inheritdoc}
@@ -31,7 +49,7 @@ class TaxSubscriber implements EventSubscriberInterface {
   public function onCustomerProfile(CustomerProfileEvent $event) {
     $order_item = $event->getOrderItem();
     $order = $order_item->getOrder();
-    if (!$order->hasField('shipments') || $order->get('shipments')->isEmpty()) {
+    if (!$this->shippingOrderManager->hasShipments($order)) {
       return;
     }
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */
