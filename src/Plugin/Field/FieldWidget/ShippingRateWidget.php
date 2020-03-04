@@ -31,13 +31,6 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
 class ShippingRateWidget extends WidgetBase implements ContainerFactoryPluginInterface {
 
   /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
    * The currency formatter.
    *
    * @var \CommerceGuys\Intl\Formatter\CurrencyFormatterInterface
@@ -64,17 +57,14 @@ class ShippingRateWidget extends WidgetBase implements ContainerFactoryPluginInt
    *   The widget settings.
    * @param array $third_party_settings
    *   Any third party settings.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
    * @param \CommerceGuys\Intl\Formatter\CurrencyFormatterInterface $currency_formatter
    *   The currency formatter.
    * @param \Drupal\commerce_shipping\ShipmentManagerInterface $shipment_manager
    *   The shipment manager.
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, EntityTypeManagerInterface $entity_type_manager, CurrencyFormatterInterface $currency_formatter, ShipmentManagerInterface $shipment_manager) {
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, CurrencyFormatterInterface $currency_formatter, ShipmentManagerInterface $shipment_manager) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
 
-    $this->entityTypeManager = $entity_type_manager;
     $this->currencyFormatter = $currency_formatter;
     $this->shipmentManager = $shipment_manager;
   }
@@ -89,7 +79,6 @@ class ShippingRateWidget extends WidgetBase implements ContainerFactoryPluginInt
       $configuration['field_definition'],
       $configuration['settings'],
       $configuration['third_party_settings'],
-      $container->get('entity_type.manager'),
       $container->get('commerce_price.currency_formatter'),
       $container->get('commerce_shipping.shipment_manager')
     );
@@ -153,16 +142,7 @@ class ShippingRateWidget extends WidgetBase implements ContainerFactoryPluginInt
       $rate = $element[$selected_value]['#rate'];
       /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
       $shipment = $items[0]->getEntity();
-
-      $shipping_method_storage = $this->entityTypeManager->getStorage('commerce_shipping_method');
-      /** @var \Drupal\commerce_shipping\Entity\ShippingMethodInterface $shipping_method */
-      $shipping_method = $shipping_method_storage->load($rate->getShippingMethodId());
-      $shipping_method_plugin = $shipping_method->getPlugin();
-      if (empty($shipment->getPackageType())) {
-        $shipment->setPackageType($shipping_method_plugin->getDefaultPackageType());
-      }
-      $shipping_method_plugin->selectRate($shipment, $rate);
-
+      $this->shipmentManager->applyRate($shipment, $rate);
       // Put delta mapping in $form_state, so that flagErrors() can use it.
       $field_state = static::getWidgetState($form['#parents'], $field_name, $form_state);
       foreach ($items as $delta => $item) {

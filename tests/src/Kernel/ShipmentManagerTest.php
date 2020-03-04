@@ -172,6 +172,24 @@ class ShipmentManagerTest extends ShippingKernelTestBase {
   }
 
   /**
+   * Tests applying rates.
+   *
+   * @covers ::applyRate
+   */
+  public function testApplyRate() {
+    $rates = $this->shipmentManager->calculateRates($this->shipment);
+    $this->assertCount(2, $rates);
+    /** @var \Drupal\commerce_shipping\ShippingRate $second_rate */
+    $second_rate = end($rates);
+    $this->shipmentManager->applyRate($this->shipment, $second_rate);
+
+    $this->assertEquals($second_rate->getShippingMethodId(), $this->shipment->getShippingMethodId());
+    $this->assertEquals($second_rate->getService()->getId(), $this->shipment->getShippingService());
+    $this->assertEquals($second_rate->getOriginalAmount(), $this->shipment->getOriginalAmount());
+    $this->assertEquals($second_rate->getAmount(), $this->shipment->getAmount());
+  }
+
+  /**
    * Tests calculating rates.
    *
    * @covers ::calculateRates

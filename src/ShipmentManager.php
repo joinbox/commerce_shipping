@@ -62,6 +62,20 @@ class ShipmentManager implements ShipmentManagerInterface {
   /**
    * {@inheritdoc}
    */
+  public function applyRate(ShipmentInterface $shipment, ShippingRate $rate) {
+    $shipping_method_storage = $this->entityTypeManager->getStorage('commerce_shipping_method');
+    /** @var \Drupal\commerce_shipping\Entity\ShippingMethodInterface $shipping_method */
+    $shipping_method = $shipping_method_storage->load($rate->getShippingMethodId());
+    $shipping_method_plugin = $shipping_method->getPlugin();
+    if (empty($shipment->getPackageType())) {
+      $shipment->setPackageType($shipping_method_plugin->getDefaultPackageType());
+    }
+    $shipping_method_plugin->selectRate($shipment, $rate);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function calculateRates(ShipmentInterface $shipment) {
     $all_rates = [];
     /** @var \Drupal\commerce_shipping\ShippingMethodStorageInterface $shipping_method_storage */
