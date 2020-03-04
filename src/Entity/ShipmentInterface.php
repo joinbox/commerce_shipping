@@ -18,6 +18,13 @@ use Drupal\profile\Entity\ProfileInterface;
 interface ShipmentInterface extends ContentEntityInterface, EntityAdjustableInterface, EntityChangedInterface {
 
   /**
+   * Clears the shipment's rate, its shipping service & method.
+   *
+   * @return $this
+   */
+  public function clearRate();
+
+  /**
    * Populates the shipment from the given proposed shipment.
    *
    * @param \Drupal\commerce_shipping\ProposedShipment $proposed_shipment

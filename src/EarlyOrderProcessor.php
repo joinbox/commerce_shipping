@@ -88,15 +88,11 @@ class EarlyOrderProcessor implements OrderProcessorInterface {
       }
       $rates = $this->shipmentManager->calculateRates($shipment);
 
-      // There is no rates for shipping. "reset" the rate...
+      // There is no rates for shipping. "clear" the rate...
       // Note that we don't remove the shipment to prevent data loss (we're
       // mainly interested in preserving the shipping profile).
       if (empty($rates)) {
-        // @todo: Move that logic to a method on the ShipmentManager?
-        $shipment->set('amount', NULL);
-        $shipment->set('original_amount', NULL);
-        $shipment->set('shipping_method', NULL);
-        $shipment->set('shipping_service', NULL);
+        $shipment->clearRate();
         continue;
       }
       $rate = $this->shipmentManager->selectDefaultRate($shipment, $rates);

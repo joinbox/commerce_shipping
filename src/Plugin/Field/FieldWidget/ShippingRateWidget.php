@@ -6,7 +6,6 @@ use CommerceGuys\Intl\Formatter\CurrencyFormatterInterface;
 use Drupal\commerce_shipping\ShipmentManagerInterface;
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Utility\NestedArray;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;

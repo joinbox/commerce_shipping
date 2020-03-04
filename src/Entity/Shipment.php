@@ -86,6 +86,17 @@ class Shipment extends ContentEntityBase implements ShipmentInterface {
   /**
    * {@inheritdoc}
    */
+  public function clearRate() {
+    $fields = ['amount', 'original_amount', 'shipping_method', 'shipping_service'];
+    foreach ($fields as $field) {
+      $this->set($field, NULL);
+    }
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function populateFromProposedShipment(ProposedShipment $proposed_shipment) {
     if ($proposed_shipment->getType() != $this->bundle()) {
       throw new \InvalidArgumentException(sprintf('The proposed shipment type "%s" does not match the shipment type "%s".', $proposed_shipment->getType(), $this->bundle()));

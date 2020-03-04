@@ -344,4 +344,45 @@ class ShipmentTest extends ShippingKernelTestBase {
     $shipment->save();
   }
 
+  /**
+   * @covers ::clearRate
+   */
+  public function testClearRate() {
+    $fields = ['amount', 'original_amount', 'shipping_method', 'shipping_service'];
+    $user = $this->createUser(['mail' => $this->randomString() . '@example.com']);
+    /** @var \Drupal\commerce_order\Entity\OrderInterface $order */
+    $order = Order::create([
+      'type' => 'default',
+      'state' => 'draft',
+      'mail' => $user->getEmail(),
+      'uid' => $user->id(),
+      'store_id' => $this->store->id(),
+    ]);
+    $order->setRefreshState(Order::REFRESH_SKIP);
+    $order->save();
+    $order = $this->reloadEntity($order);
+    /** @var \Drupal\commerce_shipping\Entity\ShippingMethodInterface $shipping_method */
+    $shipping_method = ShippingMethod::create([
+      'name' => $this->randomString(),
+      'status' => 1,
+    ]);
+    $shipping_method->save();
+    $shipping_method = $this->reloadEntity($shipping_method);
+    $shipment = Shipment::create([
+      'amount' => new Price('0', 'USD'),
+      'original_amount' => new Price('0', 'USD'),
+      'shipping_service' => $this->randomString(),
+      'order_id' => $order->id(),
+      'type' => 'default',
+    ]);
+    $shipment->setShippingMethod($shipping_method);
+    foreach ($fields as $field) {
+      $this->assertFalse($shipment->get($field)->isEmpty());
+    }
+    $shipment->clearRate();
+    foreach ($fields as $field) {
+      $this->assertTrue($shipment->get($field)->isEmpty());
+    }
+  }
+
 }

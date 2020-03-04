@@ -4,7 +4,6 @@ namespace Drupal\commerce_shipping\EventSubscriber;
 
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_order\Event\OrderItemEvent;
-use Drupal\commerce_shipping\EarlyOrderProcessor;
 use Drupal\commerce_shipping\ShippingOrderManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
