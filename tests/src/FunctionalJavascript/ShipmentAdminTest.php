@@ -364,7 +364,7 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
         'target_plugin_configuration' => [
           'rate_label' => 'The best shipping',
           'rate_amount' => [
-            'number' => '9.99',
+            'number' => '7.99',
             'currency_code' => 'USD',
           ],
         ],
@@ -473,14 +473,30 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     $this->assertSession()->fieldValueEquals('title[0][value]', $shipment->label());
     $shipment_item_title = $shipment->getItems()[0]->getTitle();
     $this->assertSession()->fieldExists($shipment_item_title);
-
-    $this->getSession()->getPage()->pressButton('Recalculate shipping');
-    $this->assertSession()->assertWaitOnAjaxRequest();
+    // Assert shipping rates available on load and not lost when recalculated.
+    $this->assertNotEmpty(
+      $this->getSession()->getPage()->findField('The best shipping: $7.99')->getAttribute('checked')
+    );
     $this->assertSession()->fieldExists('Overnight shipping: $19.99');
     $this->assertSession()->fieldExists('Standard shipping: $9.99');
-    $this->assertSession()->fieldExists('The best shipping: $9.99');
+    $this->assertSession()->fieldExists('The best shipping: $7.99');
     $this->assertSession()->fieldNotExists('Carolina Special: $2.99');
     $this->assertSession()->fieldExists('Wisconsin Express: $2.99');
+    $this->getSession()->getPage()->pressButton('Recalculate shipping');
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $this->assertNotEmpty(
+      $this->getSession()->getPage()->findField('The best shipping: $7.99')->getAttribute('checked')
+    );
+    $this->assertSession()->fieldExists('Overnight shipping: $19.99');
+    $this->assertSession()->fieldExists('Standard shipping: $9.99');
+    $this->assertSession()->fieldExists('The best shipping: $7.99');
+    $this->assertSession()->fieldNotExists('Carolina Special: $2.99');
+    $this->assertSession()->fieldExists('Wisconsin Express: $2.99');
+    $wi_express = $this->getSession()->getPage()->findField('Wisconsin Express: $2.99');
+    $this->getSession()->getPage()->selectFieldOption(
+      $wi_express->getAttribute('id'),
+      $wi_express->getAttribute('value')
+    );
 
     $this->assertRenderedAddress($address, 'shipping_profile[0][profile]');
     // Select the default profile instead.
@@ -503,20 +519,22 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     $this->getSession()->getPage()->fillField('package_type', 'commerce_package_type:' . $package_type->uuid());
     $this->getSession()->getPage()->pressButton('Recalculate shipping');
     $this->assertSession()->assertWaitOnAjaxRequest();
-
     $this->assertSession()->fieldExists('Overnight shipping: $19.99');
     $this->assertSession()->fieldExists('Standard shipping: $9.99');
-    $this->assertSession()->fieldExists('The best shipping: $199.80');
+    $this->assertSession()->fieldExists('The best shipping: $159.80');
     $this->assertSession()->fieldExists('Carolina Special: $2.99');
     $this->assertSession()->fieldNotExists('Wisconsin Express: $2.99');
-
+    $this->createScreenshot('../shipment_default_method.png');
+    $this->assertNotEmpty(
+      $this->getSession()->getPage()->findField('The best shipping: $159.80')->getAttribute('checked')
+    );
     $this->submitForm([], 'Save');
 
     // Ensure the shipment has been updated.
     $shipment = $this->reloadEntity($shipment);
     $this->assertEquals('commerce_package_type:' . $package_type->uuid(), $shipment->getPackageType()->getId());
     $this->assertFalse($shipment->getData('owned_by_packer', TRUE));
-    $this->assertEquals(new Price('199.80', 'USD'), $shipment->getAmount());
+    $this->assertEquals(new Price('159.80', 'USD'), $shipment->getAmount());
 
     $shipping_profile = $this->reloadEntity($shipping_profile);
     $this->assertEquals('customer_shipping', $shipping_profile->bundle());

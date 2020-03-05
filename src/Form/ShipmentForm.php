@@ -193,6 +193,9 @@ class ShipmentForm extends ContentEntityForm {
         array_merge($form['#parents'], ['shipping_profile']),
       ],
       '#weight' => 49,
+      '#after_build' => [
+        [static::class, 'clearValues'],
+      ],
     ];
 
     return $form;
@@ -205,6 +208,33 @@ class ShipmentForm extends ContentEntityForm {
     $triggering_element = $form_state->getTriggeringElement();
     $parents = array_slice($triggering_element['#parents'], 0, -1);
     return NestedArray::getValue($form, $parents);
+  }
+
+  /**
+   * Clears user input of selected shipping rates if recalculation occured.
+   *
+   * This is required to prevent invalid options being selected is a shipping
+   * rate is no longer available.
+   *
+   * @param array $element
+   *   The element.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array
+   *   The element.
+   */
+  public static function clearValues(array $element, FormStateInterface $form_state) {
+    $triggering_element = $form_state->getTriggeringElement();
+    if (!$triggering_element) {
+      return $element;
+    }
+    $triggering_element_name = end($triggering_element['#parents']);
+    if ($triggering_element_name === 'recalculate_shipping') {
+      $user_input = &$form_state->getUserInput();
+      unset($user_input['shipping_method']);
+    }
+    return $element;
   }
 
   /**
