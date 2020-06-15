@@ -1,4 +1,4 @@
-name: Shipping
+name: Commerce Shipping
 type: module
 description: 'Provides core shipping functionality.'
 package: Commerce (contrib)
