@@ -6,7 +6,7 @@ dependencies:
     - commerce_shipping
     - state_machine
 id: order_shipments
-label: 'Order Shipments'
+label: 'Order shipments'
 module: views
 description: ''
 tag: ''
@@ -433,7 +433,7 @@ display:
           entity_type: commerce_shipment
           entity_field: created
           plugin_id: date
-      title: 'Order Shipments'
+      title: 'Order shipments'
       header: {  }
       footer: {  }
       empty:
