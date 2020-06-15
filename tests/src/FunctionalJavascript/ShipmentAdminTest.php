@@ -661,10 +661,10 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     $this->getSession()->getPage()->pressButton('Add new shipment');
     $this->assertSession()->assertWaitOnAjaxRequest();
 
-    $ief = $this->getSession()->getPage()->find('css', '[data-drupal-selector="edit-shipments-form-inline-entity-form"]');
+    $ief = $this->getSession()->getPage()->find('css', '[data-drupal-selector="edit-shipments-wrapper"]');
     $this->assertNotNull($ief);
-    $ief->fillField('shipments[form][inline_entity_form][title][0][value]', 'Shipment #1');
-    $ief->fillField('shipments[form][inline_entity_form][shipping_profile][0][profile][select_address]', $shipping_profile->id());
+    $ief->fillField('shipments[form][0][title][0][value]', 'Shipment #1');
+    $ief->fillField('shipments[form][0][shipping_profile][0][profile][select_address]', $shipping_profile->id());
     $this->assertSession()->assertWaitOnAjaxRequest();
     $ief->pressButton('Create shipment');
     $this->assertSession()->assertWaitOnAjaxRequest();
