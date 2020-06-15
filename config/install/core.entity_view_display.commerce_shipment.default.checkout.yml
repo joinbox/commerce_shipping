@@ -19,9 +19,9 @@ content:
     settings: {  }
     third_party_settings: {  }
 hidden:
-  adjustments: true
   amount: true
   items: true
+  original_amount: true
   package_type: true
   shipping_profile: true
   state: true

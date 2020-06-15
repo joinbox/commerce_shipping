@@ -15,18 +15,20 @@ content:
     type: commerce_shipping_method
     weight: 0
     label: above
+    region: content
     settings: {  }
     third_party_settings: {  }
   tracking_code:
     type: commerce_tracking_link
     weight: 1
     label: hidden
+    region: content
     settings: {  }
     third_party_settings: {  }
 hidden:
-  adjustments: true
   amount: true
   items: true
+  original_amount: true
   package_type: true
   shipping_profile: true
   shipping_service: true
