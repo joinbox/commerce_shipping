@@ -447,6 +447,14 @@ class ProfileFieldCopyTest extends CommerceWebDriverTestBase {
     $billing_profile = $this->order->getBillingProfile();
     $this->assertEmpty($billing_profile);
 
+    $this->getSession()->getPage()->uncheckField($billing_prefix . '[copy_fields][enable]');
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $this->getSession()->getPage()->fillField('payment_information[billing_information][select_address]', '_new');
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $this->assertSession()->checkboxNotChecked($billing_prefix . '[copy_fields][enable]');
+    $this->getSession()->getPage()->checkField($billing_prefix . '[copy_fields][enable]');
+    $this->assertSession()->assertWaitOnAjaxRequest();
+
     // Confirm that the shipping fields were copied on page submit.
     $this->submitForm([], 'Continue to review');
     $this->order = $this->reloadEntity($this->order);

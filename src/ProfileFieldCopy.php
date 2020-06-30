@@ -81,8 +81,13 @@ class ProfileFieldCopy implements ProfileFieldCopyInterface {
     $user_input = (array) NestedArray::getValue($form_state->getUserInput(), $inline_form['#parents']);
     // Copying is enabled by default for new billing profiles.
     $enabled = $billing_profile->getData('copy_fields', $billing_profile->isNew());
-    if ($user_input && isset($user_input['copy_fields'])) {
-      $enabled = $user_input['copy_fields']['enable'];
+    if ($user_input) {
+      if (isset($user_input['copy_fields'])) {
+        $enabled = (bool) $user_input['copy_fields']['enable'];
+      }
+      elseif (isset($user_input['select_address'])) {
+        $enabled = FALSE;
+      }
     }
 
     $inline_form['copy_fields'] = [
