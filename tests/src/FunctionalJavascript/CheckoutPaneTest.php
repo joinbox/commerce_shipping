@@ -38,6 +38,20 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
   protected $secondProduct;
 
   /**
+   * First shipping method.
+   *
+   * @var \Drupal\commerce_shipping\Entity\ShippingMethodInterface
+   */
+  protected $firstShippingMethod;
+
+  /**
+   * Second shipping method.
+   *
+   * @var \Drupal\commerce_shipping\Entity\ShippingMethodInterface
+   */
+  protected $secondShippingMethod;
+
+  /**
    * The default profile's address.
    *
    * @var array
@@ -169,7 +183,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     $this->container->get('plugin.manager.commerce_package_type')->clearCachedDefinitions();
 
     // Create two flat rate shipping methods.
-    $first_shipping_method = $this->createEntity('commerce_shipping_method', [
+    $this->firstShippingMethod = $this->createEntity('commerce_shipping_method', [
       'name' => 'Overnight shipping',
       'stores' => [$this->store->id()],
       'plugin' => [
@@ -185,7 +199,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
         ],
       ],
     ]);
-    $second_shipping_method = $this->createEntity('commerce_shipping_method', [
+    $this->secondShippingMethod = $this->createEntity('commerce_shipping_method', [
       'name' => 'Standard shipping',
       'stores' => [$this->store->id()],
       // Ensure that Standard shipping shows before overnight shipping.
@@ -228,7 +242,7 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
           'display_inclusive' => TRUE,
           'filter' => 'include',
           'shipping_methods' => [
-            ['shipping_method' => $first_shipping_method->uuid()],
+            ['shipping_method' => $this->firstShippingMethod->uuid()],
           ],
           'amount' => [
             'number' => '3.00',
@@ -703,6 +717,102 @@ class CheckoutPaneTest extends CommerceWebDriverTestBase {
     ], 'Continue to review');
 
     $this->assertSession()->pageTextContains('A valid shipping method must be selected in order to check out.');
+  }
+
+  /**
+   * Tests the change of shipping rate options on checkout.
+   */
+  public function testShippingMethodOptionChanges() {
+    $conditions = [
+      'target_plugin_id' => 'shipment_address',
+      'target_plugin_configuration' => [
+        'zone' => [
+          'territories' => [
+            [
+              'country_code' => 'US',
+            ],
+          ],
+        ],
+      ],
+    ];
+    $this->firstShippingMethod->set('conditions', $conditions)->save();
+    $conditions['target_plugin_configuration']['zone']['territories'][0]['country_code'] = 'FR';
+    $this->secondShippingMethod->set('conditions', $conditions)->save();
+
+    $this->drupalGet($this->firstProduct->toUrl()->toString());
+    $this->submitForm([], 'Add to cart');
+
+    $this->drupalGet('checkout/1');
+
+    $address_de = [
+      'given_name' => 'John',
+      'family_name' => 'Smith',
+      'address_line1' => 'Hauptstrasse 38',
+      'locality' => 'Berlin',
+      'postal_code' => '75002',
+    ];
+    $address_prefix = 'shipping_information[shipping_profile][address][0][address]';
+    $page = $this->getSession()->getPage();
+    $page->fillField($address_prefix . '[country_code]', 'DE');
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    foreach ($address_de as $property => $value) {
+      $page->fillField($address_prefix . '[' . $property . ']', $value);
+    }
+    $page->findButton('Recalculate shipping')->click();
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $this->assertSession()->pageTextContains('There are no shipping rates available for this address.');
+    $this->assertSession()->pageTextNotContains('An illegal choice has been detected. Please contact the site administrator.');
+
+    $address_us = [
+      'given_name' => 'John',
+      'family_name' => 'Smith',
+      'address_line1' => 'Main street 38',
+      'locality' => 'Los Angeles',
+      'administrative_area' => 'CA',
+      'postal_code' => '90014',
+    ];
+    $address_prefix = 'shipping_information[shipping_profile][address][0][address]';
+    $page = $this->getSession()->getPage();
+    $page->fillField($address_prefix . '[country_code]', 'US');
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    foreach ($address_us as $property => $value) {
+      $page->fillField($address_prefix . '[' . $property . ']', $value);
+    }
+    $page->findButton('Recalculate shipping')->click();
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $this->assertSession()->pageTextNotContains('An illegal choice has been detected. Please contact the site administrator.');
+    $first_radio_button = $page->findField('Standard shipping: $9.99');
+    $second_radio_button = $page->findField('Overnight shipping: $19.99 $16.99');
+    $this->assertNull($first_radio_button);
+    $this->assertNotNull($second_radio_button);
+    $this->assertNotEmpty($second_radio_button->getAttribute('checked'));
+    // commerce_field_widget_form_alter() removes the description. Probably a
+    // bug.
+    $this->assertSession()->pageTextNotContains('At your door tomorrow morning');
+
+    $address_fr = [
+      'given_name' => 'John',
+      'family_name' => 'Smith',
+      'address_line1' => '38 rue du sentier',
+      'locality' => 'Paris',
+      'postal_code' => '75002',
+    ];
+    $address_prefix = 'shipping_information[shipping_profile][address][0][address]';
+    $page = $this->getSession()->getPage();
+    $page->fillField($address_prefix . '[country_code]', 'FR');
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    foreach ($address_fr as $property => $value) {
+      $page->fillField($address_prefix . '[' . $property . ']', $value);
+    }
+    $page->findButton('Recalculate shipping')->click();
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $this->assertSession()->pageTextNotContains('An illegal choice has been detected. Please contact the site administrator.');
+    $first_radio_button = $page->findField('Standard shipping: $9.99');
+    $second_radio_button = $page->findField('Overnight shipping: $19.99 $16.99');
+    $this->assertNotNull($first_radio_button);
+    $this->assertNull($second_radio_button);
+    $this->assertNotEmpty($first_radio_button->getAttribute('checked'));
+    $this->assertSession()->pageTextNotContains('At your door tomorrow morning');
   }
 
   /**

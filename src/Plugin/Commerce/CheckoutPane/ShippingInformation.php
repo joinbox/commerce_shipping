@@ -8,6 +8,7 @@ use Drupal\commerce_checkout\Plugin\Commerce\CheckoutPane\CheckoutPaneBase;
 use Drupal\commerce_checkout\Plugin\Commerce\CheckoutFlow\CheckoutFlowInterface;
 use Drupal\commerce_shipping\OrderShipmentSummaryInterface;
 use Drupal\commerce_shipping\PackerManagerInterface;
+use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\EntityTypeBundleInfo;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -229,6 +230,9 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
       '#limit_validation_errors' => [
         array_merge($pane_form['#parents'], ['shipping_profile']),
       ],
+      '#after_build' => [
+        [static::class, 'clearValues'],
+      ],
     ];
     $pane_form['removed_shipments'] = [
       '#type' => 'value',
@@ -337,6 +341,36 @@ class ShippingInformation extends CheckoutPaneBase implements ContainerFactoryPl
       $removed_shipments = $shipment_storage->loadMultiple($removed_shipment_ids);
       $shipment_storage->delete($removed_shipments);
     }
+  }
+
+  /**
+   * Clears user input of selected shipping rates if recalculation occured.
+   *
+   * This is required to prevent invalid options being selected is a shipping
+   * rate is no longer available.
+   *
+   * @param array $element
+   *   The element.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array
+   *   The element.
+   */
+  public static function clearValues(array $element, FormStateInterface $form_state) {
+    $triggering_element = $form_state->getTriggeringElement();
+    if (!$triggering_element) {
+      return $element;
+    }
+    $triggering_element_name = end($triggering_element['#parents']);
+    if ($triggering_element_name === 'recalculate_shipping') {
+      $user_input = &$form_state->getUserInput();
+      $parents = $element['#parents'];
+      array_pop($parents);
+      $parents[] = 'shipments';
+      NestedArray::unsetValue($user_input, $parents);
+    }
+    return $element;
   }
 
   /**
