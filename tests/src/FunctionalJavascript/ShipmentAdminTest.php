@@ -11,6 +11,7 @@ use Drupal\commerce_shipping\Entity\PackageType;
 use Drupal\commerce_shipping\Entity\Shipment;
 use Drupal\commerce_shipping\Entity\ShipmentType;
 use Drupal\commerce_shipping\ShipmentItem;
+use Drupal\Core\Test\AssertMailTrait;
 use Drupal\Core\Url;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
@@ -26,6 +27,8 @@ use Drupal\views\Entity\View;
  * @group commerce_shipping
  */
 class ShipmentAdminTest extends CommerceWebDriverTestBase {
+
+  use AssertMailTrait;
 
   /**
    * The default profile's address.
@@ -78,6 +81,7 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
     return array_merge([
       'administer commerce_order',
       'administer commerce_shipment',
+      'administer commerce_shipment_type',
       'access commerce_order overview',
     ], parent::getAdministratorPermissions());
   }
@@ -130,6 +134,7 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
       'state' => 'completed',
       'order_items' => [$order_item],
       'store_id' => $this->store,
+      'mail' => $this->loggedInUser->getEmail(),
     ]);
     $this->shipmentUri = Url::fromRoute('entity.commerce_shipment.collection', [
       'commerce_order' => $this->order->id(),
@@ -731,6 +736,53 @@ class ShipmentAdminTest extends CommerceWebDriverTestBase {
       }
       $this->assertContains($value, $address_text);
     }
+  }
+
+  /**
+   * Tests shipment confirmation email.
+   *
+   * @group debug
+   */
+  public function testShipmentConfirmationEmail() {
+    // Enable email confirmation and set bcc address.
+    $this->drupalGet('/admin/commerce/config/shipment-types/default/edit');
+    $edit = [
+      'sendConfirmation' => 1,
+      'confirmationBcc' => 'testBcc@shipping.com',
+    ];
+    $this->submitForm($edit, 'Save');
+
+    // Add Shipment.
+    $this->drupalGet($this->shipmentUri);
+    $page = $this->getSession()->getPage();
+    $page->clickLink('Add shipment');
+    $page->fillField('title[0][value]', 'Test shipment');
+    $page->hasField('shipment_items[1]');
+    $page->checkField('shipment_items[1]');
+    $page->hasCheckedField('shipment_items[1]');
+
+    $this->assertRenderedAddress($this->defaultAddress, 'shipping_profile[0][profile]');
+
+    $page->pressButton('Recalculate shipping');
+    $this->assertSession()->assertWaitOnAjaxRequest();
+
+    $page->fillField('tracking_code[0][value]', 'A1234567890');
+    $page->pressButton('Save');
+
+    // Email is triggered at Send shipment step.
+    $this->getSession()->getPage()->pressButton('Finalize shipment');
+    $this->getSession()->getPage()->pressButton('Send shipment');
+
+    // Test email content.
+    $email = current($this->getMails());
+    $this->assertEquals('testBcc@shipping.com', $email['headers']['Bcc']);
+    $this->assertEquals("An item for order #{$this->order->getOrderNumber()} shipped!", $email['subject']);
+    $this->assertContains('Bryan Centarro', $email['body']);
+    $this->assertContains('9 Drupal Ave', $email['body']);
+    $this->assertContains('Greenville, SC', $email['body']);
+    $this->assertContains('29616', $email['body']);
+    $this->assertContains('Tracking information:', $email['body']);
+    $this->assertContains('A1234567890', $email['body']);
   }
 
 }

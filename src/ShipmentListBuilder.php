@@ -119,4 +119,21 @@ class ShipmentListBuilder extends EntityListBuilder {
     return $row + parent::buildRow($entity);
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  protected function getDefaultOperations(EntityInterface $entity) {
+    $operations = parent::getDefaultOperations($entity);
+
+    if ($entity->getOrder()->access('resend_receipt')) {
+      $operations['resend_confirmation'] = [
+        'title' => $this->t('Resend confirmation'),
+        'weight' => 20,
+        'url' => $entity->toUrl('resend-confirmation-form'),
+      ];
+    }
+
+    return $operations;
+  }
+
 }

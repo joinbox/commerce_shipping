@@ -89,6 +89,12 @@ commerce_shipping.commerce_shipment_type.*:
     profileType:
       type: string
       label: 'The profile type'
+    sendConfirmation:
+      type: boolean
+      label: 'Send Confirmation'
+    confirmationBcc:
+      type: string
+      label: 'The confirmation BCC email'
 
 commerce_shipping.commerce_package_type.*:
   type: config_entity

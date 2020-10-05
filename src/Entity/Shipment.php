@@ -43,6 +43,7 @@ use Drupal\profile\Entity\ProfileInterface;
  *       "add" = "Drupal\commerce_shipping\Form\ShipmentForm",
  *       "edit" = "Drupal\commerce_shipping\Form\ShipmentForm",
  *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
+ *       "resend-confirmation" = "Drupal\commerce_shipping\Form\ShipmentConfirmationResendForm",
  *     },
  *     "inline_form" = "Drupal\commerce_shipping\Form\ShipmentInlineForm",
  *     "views_data" = "Drupal\views\EntityViewsData",
@@ -66,6 +67,7 @@ use Drupal\profile\Entity\ProfileInterface;
  *     "add-form" = "/admin/commerce/orders/{commerce_order}/shipments/add/{commerce_shipment_type}",
  *     "edit-form" = "/admin/commerce/orders/{commerce_order}/shipments/{commerce_shipment}/edit",
  *     "delete-form" = "/admin/commerce/orders/{commerce_order}/shipments/{commerce_shipment}/delete",
+ *     "resend-confirmation-form" = "/admin/commerce/orders/{commerce_order}/shipments/{commerce_shipment}/resend-confirmation"
  *   },
  *   bundle_entity_type = "commerce_shipment_type",
  *   field_ui_base_route = "entity.commerce_shipment_type.edit_form",

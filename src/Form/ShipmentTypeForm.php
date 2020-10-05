@@ -82,6 +82,21 @@ class ShipmentTypeForm extends CommerceBundleEntityFormBase {
       '#required' => TRUE,
       '#disabled' => $shipments_exist,
     ];
+    $form['emails']['sendConfirmation'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Send customer an email confirmation when shipped'),
+      '#default_value' => $shipment_type->isNew() ? TRUE : $shipment_type->shouldSendConfirmation(),
+    ];
+    $form['emails']['confirmationBcc'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Send a copy of the shipment confirmation to this email:'),
+      '#default_value' => $shipment_type->isNew() ? '' : $shipment_type->getConfirmationBcc(),
+      '#states' => [
+        'visible' => [
+          ':input[name="sendConfirmation"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
     $form = $this->buildTraitForm($form, $form_state);
 
     return $this->protectBundleIdElement($form);

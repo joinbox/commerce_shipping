@@ -42,6 +42,8 @@ use Drupal\commerce\Entity\CommerceBundleEntityBase;
  *     "uuid",
  *     "profileType",
  *     "traits",
+ *     "sendConfirmation",
+ *     "confirmationBcc",
  *   },
  *   links = {
  *     "add-form" = "/admin/commerce/config/shipment-types/add",
@@ -61,6 +63,20 @@ class ShipmentType extends CommerceBundleEntityBase implements ShipmentTypeInter
   protected $profileType = 'customer';
 
   /**
+   * Shipping confirmation email enabled.
+   *
+   * @var bool
+   */
+  protected $sendConfirmation;
+
+  /**
+   * Shipping confirmation BCC email address.
+   *
+   * @var string
+   */
+  protected $confirmationBcc;
+
+  /**
    * {@inheritdoc}
    */
   public function getProfileTypeId() {
@@ -72,6 +88,36 @@ class ShipmentType extends CommerceBundleEntityBase implements ShipmentTypeInter
    */
   public function setProfileTypeId($profile_type_id) {
     $this->profileType = $profile_type_id;
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function shouldSendConfirmation() {
+    return (bool) $this->sendConfirmation;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setSendConfirmation($send_receipt) {
+    $this->sendConfirmation = (bool) $send_receipt;
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConfirmationBcc() {
+    return $this->confirmationBcc;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setConfirmationBcc($confirmation_bcc) {
+    $this->confirmationBcc = $confirmation_bcc;
     return $this;
   }
 

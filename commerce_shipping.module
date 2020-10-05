@@ -305,6 +305,14 @@ function commerce_shipping_theme() {
     'commerce_shipment' => [
       'render element' => 'elements',
     ],
+    'commerce_shipment_confirmation' => [
+      'variables' => [
+        'order_entity' => NULL,
+        'shipment_entity' => NULL,
+        'shipping_profile' => NULL,
+        'tracking_code' => NULL,
+      ],
+    ],
   ];
 }
 
