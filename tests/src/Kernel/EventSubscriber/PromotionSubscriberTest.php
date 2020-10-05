@@ -53,6 +53,9 @@ class PromotionSubscriberTest extends ShippingKernelTestBase implements ServiceM
     'commerce_promotion',
   ];
 
+  /**
+   * {@inheritdoc}
+   */
   public function setUp() {
     parent::setUp();
 
@@ -101,7 +104,7 @@ class PromotionSubscriberTest extends ShippingKernelTestBase implements ServiceM
         'amount' => Price::fromArray([
           'currency_code' => 'USD',
           'number' => 100,
-        ])
+        ]),
       ]),
     ];
     $method = $this->createMock(ShippingMethodInterface::class);
@@ -132,4 +135,5 @@ class PromotionSubscriberTest extends ShippingKernelTestBase implements ServiceM
   public function alter(ContainerBuilder $container) {
     $container->getDefinition('plugin.manager.commerce_promotion_offer')->setClass(TestNoShippingOfferManager::class);
   }
+
 }
