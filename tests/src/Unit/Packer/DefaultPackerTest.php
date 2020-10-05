@@ -79,6 +79,14 @@ class DefaultPackerTest extends UnitTestCase {
     $second_order_item->getQuantity()->willReturn(3);
     $order_items[] = $second_order_item->reveal();
 
+    $third_order_item = $this->prophesize(OrderItemInterface::class);
+    $third_order_item->id()->willReturn(2003);
+    $third_order_item->getTitle()->willReturn('T-shirt (black, small)');
+    $third_order_item->getPurchasedEntity()->willReturn($purchased_entity);
+    $third_order_item->getUnitPrice()->willReturn(new Price('15', 'USD'));
+    $third_order_item->getQuantity()->willReturn(0);
+    $order_items[] = $third_order_item->reveal();
+
     $order = $this->prophesize(OrderInterface::class);
     $order->bundle()->willReturn('default');
     $order->id()->willReturn(2);
