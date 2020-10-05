@@ -282,8 +282,8 @@ function commerce_shipping_entity_operation(EntityInterface $entity) {
   if ($entity->hasField('cart') && $entity->get('cart')->value) {
     return;
   }
-  // Only show if the user has the "administer commerce_shipment" permission.
-  if (!\Drupal::currentUser()->hasPermission('administer commerce_shipment')) {
+  // Only show if the user can create shipments.
+  if (!$entity->access('create')) {
     return;
   }
   $operations = [];

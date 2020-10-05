@@ -35,7 +35,8 @@ use Drupal\profile\Entity\ProfileInterface;
  *   handlers = {
  *     "list_builder" = "Drupal\commerce_shipping\ShipmentListBuilder",
  *     "storage" = "Drupal\commerce_shipping\ShipmentStorage",
- *     "access" = "Drupal\Core\Entity\EntityAccessControlHandler",
+ *     "access" = "Drupal\commerce_shipping\ShipmentAccessControlHandler",
+ *     "permission_provider" = "Drupal\commerce_shipping\ShipmentPermissionProvider",
  *     "views_data" = "Drupal\commerce\CommerceEntityViewsData",
  *     "form" = {
  *       "default" = "Drupal\commerce_shipping\Form\ShipmentForm",

@@ -53,11 +53,11 @@ class ShipmentCollectionAccessCheck implements AccessInterface {
     $shipment_type_id = $order_type->getThirdPartySetting('commerce_shipping', 'shipment_type');
     // Check if this is a cart order.
     $order_is_cart = $order->hasField('cart') && $order->get('cart')->value;
+    $access_control_handler = $this->entityTypeManager->getAccessControlHandler('commerce_shipment');
 
     // Only allow access if order type has a corresponding shipment type.
-    // @todo should we validate that the shipment type exists?
     return AccessResult::allowedIf($shipment_type_id !== NULL)
-      ->andIf(AccessResult::allowedIfHasPermission($account, 'administer commerce_shipment'))
+      ->andIf(AccessResult::allowedIf($access_control_handler->createAccess($shipment_type_id, $account)))
       ->andIf(AccessResult::allowedIf(!$order_is_cart))
       ->addCacheableDependency($order_type)
       ->addCacheableDependency($order);
