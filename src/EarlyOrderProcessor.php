@@ -86,6 +86,8 @@ class EarlyOrderProcessor implements OrderProcessorInterface {
       if (!$should_refresh) {
         continue;
       }
+
+      $shipment->order_id->entity = $order;
       $rates = $this->shipmentManager->calculateRates($shipment);
 
       // There is no rates for shipping. "clear" the rate...
