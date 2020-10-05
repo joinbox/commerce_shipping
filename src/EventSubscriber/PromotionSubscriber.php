@@ -106,6 +106,9 @@ class PromotionSubscriber implements EventSubscriberInterface {
    */
   protected function getPromotions(OrderInterface $order) {
     $offer_ids = $this->getOfferIds();
+    if (!$offer_ids) {
+      return [];
+    }
     $promotions = $this->promotionStorage->loadAvailable($order, $offer_ids);
     $coupons = $this->getCoupons($order, $offer_ids);
     foreach ($coupons as $coupon) {
