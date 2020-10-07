@@ -19,5 +19,5 @@ entity.commerce_shipment_type.collection:
 entity.commerce_shipping_method.collection:
   title: 'Shipping methods'
   route_name: 'entity.commerce_shipping_method.collection'
-  parent: 'commerce_shipping.configuration'
+  parent: 'commerce.admin_commerce'
   description: 'Manage your shipping methods.'
