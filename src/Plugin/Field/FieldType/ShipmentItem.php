@@ -26,7 +26,7 @@ class ShipmentItem extends FieldItemBase {
    * {@inheritdoc}
    */
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
-    $properties['value'] = DataDefinition::create('any')
+    $properties['value'] = DataDefinition::create('shipment_item')
       ->setLabel(t('Value'))
       ->setRequired(TRUE);
 

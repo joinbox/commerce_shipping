@@ -148,4 +148,21 @@ final class ShipmentItem {
     return $this->tariffCode;
   }
 
+  /**
+   * Gets the array representation of the shipment item.
+   *
+   * @return array
+   *   The array representation of the shipment item.
+   */
+  public function toArray() {
+    return [
+      'order_item_id' => $this->getOrderItemId(),
+      'title' => $this->getTitle(),
+      'quantity' => $this->getQuantity(),
+      'weight' => $this->getWeight()->toArray(),
+      'declared_value' => $this->getDeclaredValue()->toArray(),
+      'tariff_code' => $this->getTariffCode(),
+    ];
+  }
+
 }
