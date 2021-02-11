@@ -549,7 +549,7 @@ class Shipment extends ContentEntityBase implements ShipmentInterface {
         $default_package_type = $shipping_method->getPlugin()->getDefaultPackageType();
         $this->set('package_type', $default_package_type->getId());
       }
-   }
+    }
     $this->recalculateWeight();
   }
 
