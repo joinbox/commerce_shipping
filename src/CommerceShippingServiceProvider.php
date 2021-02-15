@@ -41,7 +41,8 @@ class CommerceShippingServiceProvider extends ServiceProviderBase {
     }
     if (isset($modules['serialization'])) {
       $container->register('commerce_shipping.normalizer.shipment_item', ShipmentItemNormalizer::class)
-        ->addTag('normalizer');
+        // Ensure that our normalizer takes precedence.
+        ->addTag('normalizer', ['priority' => 5]);
     }
   }
 
