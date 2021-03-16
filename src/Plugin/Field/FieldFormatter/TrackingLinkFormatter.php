@@ -45,7 +45,7 @@ class TrackingLinkFormatter extends FormatterBase {
     $elements = [];
     $elements[] = [
       '#type' => 'link',
-      '#title' => $this->t('Tracking link'),
+      '#title' => $shipment->getTrackingCode(),
       '#url' => $tracking_url,
     ];
 
