@@ -74,9 +74,14 @@ class ShipmentConfirmationMail implements ShipmentConfirmationMailInterface {
       'order' => $order,
       'shipment' => $shipment,
     ];
-    $customer = $order->getCustomer();
-    if ($customer->isAuthenticated()) {
-      $params['langcode'] = $customer->getPreferredLangcode();
+
+    if ($orderLangCode = $order->getData('languageCode')) {
+      $params['langcode'] = $orderLangCode;
+    } else {
+      $customer = $order->getCustomer();
+      if ($customer->isAuthenticated()) {
+        $params['langcode'] = $customer->getPreferredLangcode();
+      }
     }
 
     return $this->mailHandler->sendMail($to, $subject, $body, $params);
