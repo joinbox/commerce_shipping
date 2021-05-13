@@ -49,6 +49,7 @@ class FlatRate extends ShippingMethodBase {
       'rate_description' => '',
       'rate_amount' => NULL,
       'pimId' => '',
+      'delivery_time' => '',
       'services' => ['default'],
     ] + parent::defaultConfiguration();
   }
@@ -90,6 +91,12 @@ class FlatRate extends ShippingMethodBase {
       '#description' => t('The ID from the PIM system.'),
       '#default_value' => $this->configuration['pimId'],
     ];
+    $form['delivery_time'] = [
+      '#type' => 'textfield',
+      '#title' => t('Delivery Time'),
+      '#description' => t('Delivery Time of this shipping method.'),
+      '#default_value' => $this->configuration['delivery_time'],
+    ];
 
     return $form;
   }
@@ -106,6 +113,7 @@ class FlatRate extends ShippingMethodBase {
       $this->configuration['rate_description'] = $values['rate_description'];
       $this->configuration['rate_amount'] = $values['rate_amount'];
       $this->configuration['pimId'] = $values['pimId'];
+      $this->configuration['delivery_time'] = $values['delivery_time'];
     }
   }
 
