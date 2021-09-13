@@ -50,6 +50,7 @@ class FlatRate extends ShippingMethodBase {
       'rate_amount' => NULL,
       'pimId' => '',
       'delivery_time' => '',
+      'review_text' => '',
       'services' => ['default'],
     ] + parent::defaultConfiguration();
   }
@@ -97,6 +98,12 @@ class FlatRate extends ShippingMethodBase {
       '#description' => t('Delivery Time of this shipping method.'),
       '#default_value' => $this->configuration['delivery_time'],
     ];
+    $form['review_text'] = [
+      '#type' => 'textfield',
+      '#title' => t('Text for the review page'),
+      '#description' => t('Description text for the review page.'),
+      '#default_value' => $this->configuration['review_text'],
+    ];
 
     return $form;
   }
@@ -114,6 +121,7 @@ class FlatRate extends ShippingMethodBase {
       $this->configuration['rate_amount'] = $values['rate_amount'];
       $this->configuration['pimId'] = $values['pimId'];
       $this->configuration['delivery_time'] = $values['delivery_time'];
+      $this->configuration['review_text'] = $values['review_text'];
     }
   }
 
