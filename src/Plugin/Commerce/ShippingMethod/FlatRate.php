@@ -99,7 +99,7 @@ class FlatRate extends ShippingMethodBase {
       '#default_value' => $this->configuration['delivery_time'],
     ];
     $form['review_text'] = [
-      '#type' => 'textfield',
+      '#type' => 'textarea',
       '#title' => t('Text for the review page'),
       '#description' => t('Description text for the review page.'),
       '#default_value' => $this->configuration['review_text'],
