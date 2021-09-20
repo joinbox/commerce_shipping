@@ -75,7 +75,7 @@ class FlatRate extends ShippingMethodBase {
       '#required' => TRUE,
     ];
     $form['rate_description'] = [
-      '#type' => 'textfield',
+      '#type' => 'textarea',
       '#title' => t('Rate description'),
       '#description' => t('Provides additional details about the rate to the customer.'),
       '#default_value' => $this->configuration['rate_description'],
